@@ -1,76 +1,15 @@
-import { useEffect, useState, useContext } from "react";
-import { DownSvg, FromMiddleSvg, FromSidesSvg, UpAndDown, UpSvg } from "./Svgs";
-import { type State, StateContext } from "./App";
+import { useEffect, useState, useContext, useRef } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { ColumnNames, RowNames, RowName, headerIcons, rowIcons } from "./BoardConstants";
+import { StateContext } from "./App";
+import { useNetworking } from "./NetworkingContext";
 
-interface Cell {
+export interface Cell {
 	value?: number;
 	isAvailable?: boolean;
 }
 
-export enum ColumnNames {
-	OdGore = 0,
-	OdDole = 1,
-	Slobodna = 2,
-	Najava = 3,
-	Rucna = 4,
-	Dirigovana = 5,
-	OdSredine = 6,
-	OdGoreIDole = 7,
-	Obavezna = 8,
-	Maksimalna = 9,
-	Yamb = 10,
-}
-
-export enum RowNames {
-	Jedinice = 0,
-	Dvojke = 1,
-	Trojke = 2,
-	Cetvorke = 3,
-	Petice = 4,
-	Sestice = 5,
-	Suma1 = 6, // nadji bolje ime
-	Maksimum = 7,
-	Minimum = 8,
-	Suma2 = 9,
-	Kenta = 10,
-	Triling = 11,
-	Ful = 12,
-	Kare = 13,
-	Yamb = 14,
-	Suma3 = 15,
-}
-
-const headerIcons = [
-	<DownSvg />,
-	<UpSvg />,
-	<UpAndDown />,
-	<div className="text-[2.1rem]">N</div>,
-	<div className="text-[2.1rem]">R</div>,
-	<div className="text-[2.1rem]">D</div>,
-	<FromMiddleSvg />,
-	<FromSidesSvg />,
-	<div className="text-[2.1rem]">O</div>,
-	<div className="text-[2.1rem]">M</div>,
-];
-
-const rowIcons = [
-	<div className="text-[1.9rem]">1</div>,
-	<div className="text-[1.9rem]">2</div>,
-	<div className="text-[1.9rem]">3</div>,
-	<div className="text-[1.9rem]">4</div>,
-	<div className="text-[1.9rem]">5</div>,
-	<div className="text-[1.9rem]">6</div>,
-	<div className="text-[2.1rem]">Σ</div>,
-	<div className="text-[1.4rem]">MAX.</div>,
-	<div className="text-[1.4rem]">MIN.</div>,
-	<div className="text-[2.1rem]">Σ</div>,
-	<div className="text-[1.2rem]">KENTA</div>,
-	<div className="text-[1.0rem]">TRILING</div>,
-	<div>FUL</div>,
-	<div className="text-[1.35rem]">KARE</div>,
-	<div className="text-[1.35rem]">YAMB</div>,
-	<div className="text-[2.1rem]">Σ</div>,
-];
+ 
 
 const SetNewAvailable = (
 	tabela: Cell[][],
@@ -151,10 +90,12 @@ const Row = ({
 	rowIndex,
 	tabela,
 	updateTabela,
+	sendMessageToNextPlayer,
 }: {
-	rowIndex: number;
+	rowIndex: RowName;
 	tabela: Cell[][];
 	updateTabela: (row: number, col: number, cell: Cell) => void;
+	sendMessageToNextPlayer: (message: string, data: any) => void;
 }) => {
 	const { state, setState } = useContext(StateContext);
 
@@ -174,11 +115,14 @@ const Row = ({
 					if (
 						state.roundIndex == 1 &&
 						state.najava == undefined &&
+						state.dirigovana == undefined &&
 						rowIndex != RowNames.Suma1 &&
 						rowIndex != RowNames.Suma2 &&
 						rowIndex != RowNames.Suma3
 					) {
-						setState({ ...state, najava: rowIndex });
+						setState((prev) => ({ ...prev, najava: rowIndex }));
+						sendMessageToNextPlayer("najava", rowIndex);
+						console.log("najava", rowIndex);
 					}
 				}}
 			>
@@ -187,13 +131,22 @@ const Row = ({
 			{Array.from({ length: 10 }).map((_, colIndex) => {
 				let isActive = tabela[rowIndex][colIndex]?.isAvailable && state.value[rowIndex] > 0;
 				if (colIndex == ColumnNames.Najava && state.najava != rowIndex) isActive = false;
+				if (colIndex == ColumnNames.Dirigovana && state.dirigovana != rowIndex)
+					isActive = false;
 				if (colIndex == ColumnNames.Rucna && state.roundIndex != 1) isActive = false;
-				if (colIndex == ColumnNames.Dirigovana) isActive = false; // for now
 				if (state.najava != undefined && colIndex != ColumnNames.Najava) isActive = false;
+				if (state.dirigovana != undefined && colIndex != ColumnNames.Dirigovana)
+					isActive = false;
 				if (
 					state.najava != undefined &&
 					colIndex == ColumnNames.Najava &&
 					rowIndex == state.najava
+				)
+					isActive = true;
+				if (
+					state.dirigovana != undefined &&
+					colIndex == ColumnNames.Dirigovana &&
+					rowIndex == state.dirigovana
 				)
 					isActive = true;
 
@@ -231,14 +184,19 @@ const Row = ({
 							if (!isActive) {
 								return;
 							}
-
+							let newValue = state.value[rowIndex] == -1 ? 0 : state.value[rowIndex];
 							console.log(state.value[rowIndex]);
 							updateTabela(rowIndex, colIndex, {
-								value: state.value[rowIndex] == -1 ? 0 : state.value[rowIndex],
+								value: newValue,
 								isAvailable: false,
 							});
 							SetNewAvailable(tabela, updateTabela, rowIndex, colIndex);
-							setState({ value: [], roundIndex: 0 });
+							setState({ value: [], roundIndex: 0, isMyMove: false });
+							sendMessageToNextPlayer("move", {
+								rowIndex,
+								colIndex,
+								value: newValue,
+							});
 						}}
 					>
 						{tabela[rowIndex][colIndex]?.value != undefined
@@ -264,15 +222,19 @@ const Row = ({
 	);
 };
 
-export const YambBoard = () => {
-	const [tabela, setTabela] = useState<Cell[][]>(() => Array.from({ length: 16 }, () => []));
-	const updateTabela = (row: number, col: number, value: Cell) => {
-		setTabela((prev) => {
-			const copy = prev.map((row) => [...row]);
-			copy[row][col] = value;
-			return copy;
-		});
-	};
+export const YambBoard = ({
+	scale,
+	tabela,
+	setTabela,
+	updateTabela,
+}: {
+	scale: number;
+	tabela: Cell[][];
+	setTabela: Dispatch<SetStateAction<Cell[][]>>;
+	updateTabela: (row: number, col: number, cell: Cell) => void;
+}) => {
+	const { sendMessageToNextPlayer } = useNetworking();
+
 	useEffect(() => {
 		updateTabela(RowNames.Jedinice, ColumnNames.OdGore, {
 			value: undefined,
@@ -299,7 +261,6 @@ export const YambBoard = () => {
 		// dont hard code this shit
 		for (let i = 0; i < 15; i++) {
 			if (i == 6 || i == 9) continue;
-			updateTabela(i, ColumnNames.Slobodna, { value: undefined, isAvailable: true });
 			updateTabela(i, ColumnNames.Najava, { value: undefined, isAvailable: true });
 			updateTabela(i, ColumnNames.Rucna, { value: undefined, isAvailable: true });
 			updateTabela(i, ColumnNames.Dirigovana, { value: undefined, isAvailable: true });
@@ -309,7 +270,9 @@ export const YambBoard = () => {
 	}, []);
 
 	useEffect(() => {
-		for (let colIndex = 0; colIndex < 10; colIndex++) {
+		console.log("FIRSHLSLSL");
+		console.log(tabela);
+		const calculateSumOfFirstSum = (colIndex: number) => {
 			if (tabela[RowNames.Suma1][colIndex]?.value == undefined) {
 				let cnt = 0;
 				let sum = 0;
@@ -329,9 +292,44 @@ export const YambBoard = () => {
 					});
 				}
 			}
+		};
+		const calculateSumOfSecondSum = (colIndex: number) => {
+			if (tabela[RowNames.Suma2][colIndex]?.value == undefined) {
+				let maxi = tabela[RowNames.Maksimum][colIndex]?.value;
+				let mini = tabela[RowNames.Minimum][colIndex]?.value;
+				let jedinice = tabela[RowNames.Jedinice][colIndex]?.value;
+
+				if (maxi != undefined && mini != undefined && jedinice != undefined) {
+					let sum = Math.max(maxi - mini, 0) * jedinice;
+					updateTabela(RowNames.Suma2, colIndex, {
+						value: sum,
+						isAvailable: false,
+					});
+				}
+			}
+		};
+		const calculateSumOfLastSum = (colIndex: number) => {
+			if (tabela[RowNames.Suma3][colIndex]?.value == undefined) {
+				let sum = 0;
+				for (let rowIndex = RowNames.Kenta; rowIndex <= RowNames.Yamb; rowIndex++) {
+					if (tabela[rowIndex][colIndex]?.value == undefined) {
+						return;
+					}
+					sum += tabela[rowIndex][colIndex]?.value ?? 0;
+				}
+				updateTabela(RowNames.Suma3, colIndex, {
+					value: sum,
+					isAvailable: false,
+				});
+			}
+		};
+		for (let colIndex = 0; colIndex < 10; colIndex++) {
+			calculateSumOfFirstSum(colIndex);
+			calculateSumOfSecondSum(colIndex);
+			calculateSumOfLastSum(colIndex);
 		}
 
-		const calculateSumOfRow = (rowName: RowNames) => {
+		const calculateSumOfRow = (rowName: (typeof RowNames)[keyof typeof RowNames]) => {
 			let sum = 0;
 			for (let colIndex = 0; colIndex < 10; colIndex++) {
 				if (tabela[rowName][colIndex]?.value == undefined) {
@@ -347,20 +345,24 @@ export const YambBoard = () => {
 				calculateSumOfRow(rowName);
 			}
 		}
+		console.log("HELOOOOO");
 	}, [tabela]); // this shit is probably slow as fuck
 
 	// row of 10 elements
 	return (
-		<div className="flex flex-col border-blue-400 border-2 border-solid rounded-md overflow-clip w-[600px] aspect-[106/118] min-h-0">
-			<HeaderRow />
-			{Array.from({ length: 16 }).map((_, rowIndex) => (
-				<Row
-					key={rowIndex}
-					rowIndex={rowIndex}
-					tabela={tabela}
-					updateTabela={updateTabela}
-				/>
-			))}
-		</div>
+		<>
+			<div className="flex flex-col border-blue-400 border-4 border-solid rounded-md overflow-clip w-[600px] aspect-[106/118] min-h-0">
+				<HeaderRow />
+				{Array.from({ length: 16 }).map((_, rowIndex) => (
+					<Row
+						key={rowIndex}
+						rowIndex={rowIndex as RowName}
+						tabela={tabela}
+						updateTabela={updateTabela}
+						sendMessageToNextPlayer={sendMessageToNextPlayer}
+					/>
+				))}
+			</div>
+		</>
 	);
 };

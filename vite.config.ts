@@ -6,4 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
 	base: "/yamb/",
 	plugins: [react(), tailwindcss()],
+	server: {
+		allowedHosts: true,
+	},
 });

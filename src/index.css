@@ -6,4 +6,10 @@
 		font-weight: 400;
 		color: oklch(42.4% 0.199 265.638);
 	}
+
+	canvas {
+		width: auto;
+		height: auto;
+		image-rendering: pixelated;
+	}
 }

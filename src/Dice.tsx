@@ -91,13 +91,13 @@ export const DicePicker = () => {
 		}
 		newValues[RowNames.Minimum] = Math.max(newValues[RowNames.Minimum], minSum);
 		newValues[RowNames.Maksimum] = Math.max(newValues[RowNames.Maksimum], maxSum);
-		setState({ ...state, value: newValues });
+		setState((prev) => ({ ...prev, value: newValues }));
 		console.log(newValues);
 	}, [rolledDice]); //TODO: fix this make this faster
 
 	const rollDice = () => {
 		if (state.roundIndex >= 3) return;
-		setState({ ...state, roundIndex: state.roundIndex + 1 });
+		setState((prev) => ({ ...prev, roundIndex: prev.roundIndex + 1 }));
 		setRolledDice([]);
 
 		for (let i = 0; i < 6 - numChosenDice; i++) {
@@ -144,15 +144,22 @@ export const DicePicker = () => {
 					))}
 				</div>
 			</div>
-			<button onClick={rollDice} className="font-bold text-xl w-[50px] h-[50px]">
-				<img
-					src="assets/rolling-dices.svg"
-					alt="Roll"
-					width={50}
-					height={50}
-					className="bg-blue-800 rounded-md border-2 border-blue-500"
-				/>
-			</button>
+			<div className="flex flex-col items-center justify-around">
+				<div className="text-center">
+					<p className="text-xl font-bold">
+						{state.roundIndex == 0 ? "" : "Round " + state.roundIndex + "/3"}
+					</p>
+				</div>
+				<button onClick={rollDice} className="font-bold text-xl w-[50px] h-[50px]">
+					<img
+						src="assets/rolling-dices.svg"
+						alt="Roll"
+						width={50}
+						height={50}
+						className="bg-blue-800 rounded-md border-2 border-blue-500"
+					/>
+				</button>
+			</div>
 		</div>
 	);
 };
