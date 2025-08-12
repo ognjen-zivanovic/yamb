@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { type State, StateContext } from "./App";
-import { RowNames } from "./Board";
+import { RowNames } from "./BoardConstants";
 
 const diceImages = [
 	null,
@@ -107,9 +107,9 @@ export const DicePicker = () => {
 	};
 
 	return (
-		<div className="flex flex-row items-center justify-center m-6 gap-6">
-			<div className="border-2 border-blue-500 rounded-md f-full">
-				<div className="flex flex-wrap gap-4 p-4 bg-blue-400 min-h-[82px] w-[412px]">
+		<div className="flex flex-row items-center justify-center gap-6">
+			<div className="border-2 border-main-600 rounded-md f-full">
+				<div className="flex flex-wrap gap-4 p-4 bg-main-500 min-h-[82px] w-[412px]">
 					{chosenDice.map((num, index) => (
 						<img
 							className="bg-black rounded-md"
@@ -126,7 +126,7 @@ export const DicePicker = () => {
 						/>
 					))}
 				</div>
-				<div className="flex flex-wrap gap-4 p-4 bg-blue-200 min-h-[82px] w-[412px]">
+				<div className="flex flex-wrap gap-4 p-4 bg-main-200 min-h-[82px] w-[412px]">
 					{rolledDice.map((num, index) => (
 						<img
 							className="bg-black rounded-md"
@@ -156,7 +156,7 @@ export const DicePicker = () => {
 						alt="Roll"
 						width={50}
 						height={50}
-						className="bg-blue-800 rounded-md border-2 border-blue-500"
+						className="bg-main-900 rounded-md border-2 border-main-600"
 					/>
 				</button>
 			</div>

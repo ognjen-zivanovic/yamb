@@ -4,12 +4,127 @@
 	html {
 		font-family: "Times New Roman", Times, serif;
 		font-weight: 400;
-		color: oklch(42.4% 0.199 265.638);
+		color: var(--main-900);
 	}
 
 	canvas {
 		width: auto;
 		height: auto;
 		image-rendering: pixelated;
+	}
+
+	:root {
+		--main-50: #f3f7ff;
+		--main-100: #e7efff;
+		--main-200: #ccdfff;
+		--main-300: #adccff;
+		--main-400: #87b8ff;
+		--main-500: #50a2ff;
+		--main-600: #4891e4;
+		--main-700: #3e7dc6;
+		--main-800: #3366a1;
+		--main-900: #244872;
+		--main-950: #193351;
+	}
+	.border-mani-50 {
+		border-color: var(--main-50);
+	}
+	.border-main-100 {
+		border-color: var(--main-100);
+	}
+	.border-main-200 {
+		border-color: var(--main-200);
+	}
+	.border-main-300 {
+		border-color: var(--main-300);
+	}
+	.border-main-400 {
+		border-color: var(--main-400);
+	}
+	.border-main-500 {
+		border-color: var(--main-500);
+	}
+	.border-main-600 {
+		border-color: var(--main-600);
+	}
+	.border-main-700 {
+		border-color: var(--main-700);
+	}
+	.border-main-800 {
+		border-color: var(--main-800);
+	}
+	.border-main-900 {
+		border-color: var(--main-900);
+	}
+	.border-main-950 {
+		border-color: var(--main-950);
+	}
+
+	.bg-main-50 {
+		background-color: var(--main-50);
+	}
+	.bg-main-100 {
+		background-color: var(--main-100);
+	}
+	.bg-main-200 {
+		background-color: var(--main-200);
+	}
+	.bg-main-300 {
+		background-color: var(--main-300);
+	}
+	.bg-main-400 {
+		background-color: var(--main-400);
+	}
+	.bg-main-500 {
+		background-color: var(--main-500);
+	}
+	.bg-main-600 {
+		background-color: var(--main-600);
+	}
+	.bg-main-700 {
+		background-color: var(--main-700);
+	}
+	.bg-main-800 {
+		background-color: var(--main-800);
+	}
+	.bg-main-900 {
+		background-color: var(--main-900);
+	}
+	.bg-main-950 {
+		background-color: var(--main-950);
+	}
+
+	.text-main-50 {
+		color: var(--main-50);
+	}
+	.text-main-100 {
+		color: var(--main-100);
+	}
+	.text-main-200 {
+		color: var(--main-200);
+	}
+	.text-main-300 {
+		color: var(--main-300);
+	}
+	.text-main-400 {
+		color: var(--main-400);
+	}
+	.text-main-500 {
+		color: var(--main-500);
+	}
+	.text-main-600 {
+		color: var(--main-600);
+	}
+	.text-main-700 {
+		color: var(--main-700);
+	}
+	.text-main-800 {
+		color: var(--main-800);
+	}
+	.text-main-900 {
+		color: var(--main-900);
+	}
+	.text-main-950 {
+		color: var(--main-950);
 	}
 }

@@ -1,15 +1,15 @@
 import { useEffect, useState, useContext, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { ColumnNames, RowNames, RowName, headerIcons, rowIcons } from "./BoardConstants";
+import {
+	ColumnNames,
+	RowNames,
+	headerIcons,
+	rowIcons,
+	type RowName,
+	type Cell,
+} from "./BoardConstants";
 import { StateContext } from "./App";
 import { useNetworking } from "./NetworkingContext";
-
-export interface Cell {
-	value?: number;
-	isAvailable?: boolean;
-}
-
- 
 
 const SetNewAvailable = (
 	tabela: Cell[][],
@@ -64,13 +64,13 @@ const SetNewAvailable = (
 const HeaderRow = () => {
 	return (
 		<div className="flex flex-row h-[calc(6*100%/118)]">
-			<div className="bg-white border-blue-400 border-1 h-full w-[calc(12*100%/106)] text-center text-[1.55rem] flex items-center justify-center">
+			<div className="bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center text-[1.55rem] flex items-center justify-center">
 				IGRA
 			</div>
 			{Array.from({ length: 10 }).map((_, index) => (
 				<div
 					key={index}
-					className={`bg-white border-blue-400 border-1 h-full w-[calc(8*100%/106)] flex items-center justify-center text-blue-800 ${
+					className={`bg-white border-main-500 border-1 h-full w-[calc(8*100%/106)] flex items-center justify-center text-main-900 ${
 						index == ColumnNames.Obavezna || index == ColumnNames.Maksimalna
 							? "brightness-75"
 							: ""
@@ -79,7 +79,7 @@ const HeaderRow = () => {
 					{headerIcons[index % headerIcons.length]}
 				</div>
 			))}
-			<div className="bg-white border-blue-400 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center flex items-center justify-center">
+			<div className="bg-white border-main-500 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center flex items-center justify-center">
 				YAMB
 			</div>
 		</div>
@@ -91,18 +91,20 @@ const Row = ({
 	tabela,
 	updateTabela,
 	sendMessageToNextPlayer,
+	broadcastMessage,
 }: {
 	rowIndex: RowName;
 	tabela: Cell[][];
 	updateTabela: (row: number, col: number, cell: Cell) => void;
 	sendMessageToNextPlayer: (message: string, data: any) => void;
+	broadcastMessage: (type: string, data: any) => void;
 }) => {
 	const { state, setState } = useContext(StateContext);
 
 	return (
 		<div className="flex flex-row h-[calc(7*100%/118)]">
 			<div
-				className={`bg-white border-blue-400 border-1 h-full w-[calc(12*100%/106)] text-center align-middle flex items-center justify-center
+				className={`bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center align-middle flex items-center justify-center
 				
 			${
 				rowIndex === RowNames.Suma1 ||
@@ -153,13 +155,13 @@ const Row = ({
 				return (
 					<div
 						key={rowIndex * 12 + colIndex}
-						className={` border-blue-400 border-1 h-full w-[calc(8*100%/106)] flex items-center justify-center text-[1.35rem] ${
+						className={` border-main-500 border-1 h-full w-[calc(8*100%/106)] flex items-center justify-center text-[1.35rem] ${
 							rowIndex === RowNames.Suma1 ||
 							rowIndex === RowNames.Suma2 ||
 							rowIndex === RowNames.Suma3
-								? "bg-blue-300 border-t-2 border-b-2"
+								? "bg-main-300 border-t-2 border-b-2"
 								: "bg-white"
-						} ${isActive ? "border-2 border-green-600" : ""} ${
+						} ${isActive ? "border-2 border-gray-800" : ""} ${
 							tabela[rowIndex][colIndex]?.value == undefined
 								? "text-gray-500"
 								: "text-black font-bold"
@@ -181,22 +183,18 @@ const Row = ({
 							) {
 								return;
 							}
-							if (!isActive) {
+							if (!state.blackout && !isActive) {
 								return;
 							}
 							let newValue = state.value[rowIndex] == -1 ? 0 : state.value[rowIndex];
-							console.log(state.value[rowIndex]);
 							updateTabela(rowIndex, colIndex, {
 								value: newValue,
 								isAvailable: false,
 							});
 							SetNewAvailable(tabela, updateTabela, rowIndex, colIndex);
 							setState({ value: [], roundIndex: 0, isMyMove: false });
-							sendMessageToNextPlayer("move", {
-								rowIndex,
-								colIndex,
-								value: newValue,
-							});
+							sendMessageToNextPlayer("next-player", {});
+							broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 						}}
 					>
 						{tabela[rowIndex][colIndex]?.value != undefined
@@ -208,9 +206,9 @@ const Row = ({
 				);
 			})}
 			<div
-				className={`border-blue-400 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center ${
+				className={`border-main-500 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center ${
 					rowIndex === 6 || rowIndex === 9 || rowIndex === 15
-						? "bg-blue-300 border-t-2 border-b-2"
+						? "bg-main-300 border-t-2 border-b-2"
 						: "bg-white"
 				}`}
 			>
@@ -223,51 +221,13 @@ const Row = ({
 };
 
 export const YambBoard = ({
-	scale,
 	tabela,
-	setTabela,
 	updateTabela,
 }: {
-	scale: number;
 	tabela: Cell[][];
-	setTabela: Dispatch<SetStateAction<Cell[][]>>;
 	updateTabela: (row: number, col: number, cell: Cell) => void;
 }) => {
-	const { sendMessageToNextPlayer } = useNetworking();
-
-	useEffect(() => {
-		updateTabela(RowNames.Jedinice, ColumnNames.OdGore, {
-			value: undefined,
-			isAvailable: true,
-		});
-		updateTabela(RowNames.Yamb, ColumnNames.OdDole, { value: undefined, isAvailable: true });
-		updateTabela(RowNames.Minimum, ColumnNames.OdSredine, {
-			value: undefined,
-			isAvailable: true,
-		});
-		updateTabela(RowNames.Maksimum, ColumnNames.OdSredine, {
-			value: undefined,
-			isAvailable: true,
-		});
-		updateTabela(RowNames.Jedinice, ColumnNames.OdGoreIDole, {
-			value: undefined,
-			isAvailable: true,
-		});
-		updateTabela(RowNames.Yamb, ColumnNames.OdGoreIDole, {
-			value: undefined,
-			isAvailable: true,
-		});
-
-		// dont hard code this shit
-		for (let i = 0; i < 15; i++) {
-			if (i == 6 || i == 9) continue;
-			updateTabela(i, ColumnNames.Najava, { value: undefined, isAvailable: true });
-			updateTabela(i, ColumnNames.Rucna, { value: undefined, isAvailable: true });
-			updateTabela(i, ColumnNames.Dirigovana, { value: undefined, isAvailable: true });
-			//updateTabela(i, ColumnNames.Obavezna, { value: undefined, isAvailable: true });
-			//updateTabela(i, ColumnNames.Maksimalna, { value: undefined, isAvailable: true });
-		}
-	}, []);
+	const { sendMessageToNextPlayer, broadcastMessage } = useNetworking();
 
 	useEffect(() => {
 		console.log("FIRSHLSLSL");
@@ -348,10 +308,9 @@ export const YambBoard = ({
 		console.log("HELOOOOO");
 	}, [tabela]); // this shit is probably slow as fuck
 
-	// row of 10 elements
 	return (
 		<>
-			<div className="flex flex-col border-blue-400 border-4 border-solid rounded-md overflow-clip w-[600px] aspect-[106/118] min-h-0">
+			<div className="flex flex-col border-main-500 border-4 border-solid rounded-md overflow-clip w-[600px] aspect-[106/118] min-h-0">
 				<HeaderRow />
 				{Array.from({ length: 16 }).map((_, rowIndex) => (
 					<Row
@@ -360,6 +319,7 @@ export const YambBoard = ({
 						tabela={tabela}
 						updateTabela={updateTabela}
 						sendMessageToNextPlayer={sendMessageToNextPlayer}
+						broadcastMessage={broadcastMessage}
 					/>
 				))}
 			</div>

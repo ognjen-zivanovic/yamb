@@ -8,11 +8,13 @@ import React, {
 	type SetStateAction,
 } from "react";
 import Peer from "peerjs";
+import { defaultTabela, type Cell } from "./BoardConstants";
 
 export interface PeerData {
 	id: string;
 	name?: string;
 	index?: number;
+	tabela?: Cell[][];
 }
 
 export interface NetworkingContextValue {
@@ -28,7 +30,7 @@ export interface NetworkingContextValue {
 	setName: Dispatch<SetStateAction<string>>;
 
 	connectToPeer: (peerId: string) => void;
-	broadcastMessage: (message: any) => void;
+	broadcastMessage: (type: string, data: any) => void;
 	sharePeerData: () => void;
 	sendMessageToNextPlayer: (type: string, data: any) => void;
 	registerCallback: (type: string, callback: (...args: any[]) => void) => void;
@@ -116,9 +118,39 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		}
 	};
 
+	const onReceiveMove = (incoming: boolean, conn: any, data: any) => {
+		setPeerData((prev) =>
+			prev.map((p) =>
+				p.id === conn.peer && p.tabela == undefined ? { ...p, tabela: defaultTabela() } : p
+			)
+		);
+		data = data.data;
+		let rowIndex = data.rowIndex;
+		let colIndex = data.colIndex;
+		let value = data.value;
+		setPeerData((prev) => {
+			//data = data.data;
+			return prev.map((p) =>
+				p.id === conn.peer && p.tabela != undefined
+					? {
+							...p,
+							tabela: p.tabela.map((row, i) =>
+								i == rowIndex
+									? row.map((cell, j) =>
+											j == colIndex ? { ...cell, value } : cell
+									  )
+									: row
+							),
+					  }
+					: p
+			);
+		});
+	};
+
 	useEffect(() => {
 		registerCallback("peer-data", onReceivePeerData);
 		registerCallback("name", onReceiveName);
+		registerCallback("move", onReceiveMove);
 	}, []);
 
 	const setupConnection = (conn: any, incoming = false) => {
@@ -140,9 +172,9 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		});
 	};
 
-	const broadcastMessage = (message: any) => {
-		console.log(`You: ${message}`);
-		connections.forEach((conn) => conn.send(message));
+	const broadcastMessage = (type: string, data: any) => {
+		// console.log(`You: ${message}`);
+		connections.forEach((conn) => conn.send({ type, data }));
 	};
 
 	const sharePeerData = () => {

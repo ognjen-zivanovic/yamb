@@ -5,13 +5,16 @@ import {
 	type SetStateAction,
 	type Dispatch,
 	useRef,
+	useContext,
 } from "react";
 import { NetworkingMenu } from "./NetworkingMenu";
 import { YambBoard } from "./Board";
-import type { RowName } from "./Board";
+import type { RowName } from "./BoardConstants";
 import { DicePicker } from "./Dice";
 import { NetworkingProvider, useNetworking } from "./NetworkingContext";
-import { type Cell } from "./Board";
+import { ColumnNames, RowNames, type Cell } from "./BoardConstants";
+import { defaultTabela } from "./BoardConstants";
+import chroma from "chroma-js";
 
 export interface State {
 	roundIndex: number;
@@ -19,6 +22,36 @@ export interface State {
 	najava?: RowName;
 	dirigovana?: RowName;
 	isMyMove: boolean;
+	blackout?: boolean;
+}
+
+function generateTailwindShades(baseColor: string) {
+	// These are roughly how Tailwind's default shades are spaced
+	const scale = chroma.scale(["#fff", baseColor, "#000"]).mode("lrgb");
+
+	const colors = {
+		50: scale(0.05).hex(),
+		100: scale(0.1).hex(),
+		200: scale(0.2).hex(),
+		300: scale(0.3).hex(),
+		400: scale(0.4).hex(),
+		500: scale(0.5).hex(), // base
+		600: scale(0.6).hex(),
+		700: scale(0.7).hex(),
+		800: scale(0.8).hex(),
+		900: scale(0.9).hex(),
+		950: scale(0.95).hex(),
+	};
+
+	for (const [key, value] of Object.entries(colors)) {
+		console.log("--main-" + key, value);
+		document.documentElement.style.setProperty("--main-" + key, value);
+	}
+}
+
+export interface TabelaState {
+	tabela: Cell[][];
+	updateTabela: (row: number, col: number, cell: Cell) => void;
 }
 
 export const StateContext = createContext<{
@@ -29,33 +62,43 @@ export const StateContext = createContext<{
 	setState: () => {},
 });
 
+export const TabelaContext = createContext<TabelaState>({
+	tabela: [] as Cell[][],
+	updateTabela: () => {},
+});
+
 const Yamb = () => {
 	const [state, setState] = useState<State>({ roundIndex: 0, value: [], isMyMove: false });
-	const [tabela, setTabela] = useState<Cell[][]>(() => Array.from({ length: 16 }, () => []));
-
-	const updateTabela = (row: number, col: number, value: Cell) => {
-		setTabela((prev) => {
-			const copy = prev.map((row) => [...row]);
-			copy[row][col] = value;
-			return copy;
-		});
-	};
-
 	const [scale, setScale] = useState(1);
+	const { tabela, updateTabela } = useContext(TabelaContext);
 
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const buttonRef = useRef<HTMLButtonElement>(null);
+	const isPickingColorRef = useRef(false);
 
-	const { peerData, peerId, registerCallback } = useNetworking();
+	const { peerData, setPeerData, peerId, registerCallback } = useNetworking();
 	useEffect(() => {
 		if (peerData[0].id === peerId) {
 			setState((prev) => ({ ...prev, isMyMove: true }));
 		}
 	}, []);
 
-	const onRecievePreviousPlayersMove = (_incoming: boolean, _conn: any, data: any) => {
-		console.log("previous players move", data);
-		console.log("aklj;sdf;asdfl;jkasdfl;jkasdfljkasdfjklafsd");
+	const saveToLocalStorage = () => {
+		setPeerData((prev) => prev.map((p) => (p.id === peerId ? { ...p, tabela } : p)));
+
+		setPeerData((prev) => {
+			localStorage.setItem("yamb-" + Date.now().toString(), JSON.stringify(prev));
+			return prev;
+		});
+	};
+
+	const loadFromLocalStorage = () => {
+		Object.keys(localStorage).forEach((key) => {
+			console.log(key);
+		});
+	};
+
+	const onRecievePreviousPlayersMove = (_incoming: boolean, _conn: any, _data: any) => {
 		setState((prev) => ({ ...prev, isMyMove: true }));
 	};
 	const onReceiveNajava = (_incoming: boolean, _conn: any, data: any) => {
@@ -65,7 +108,7 @@ const Yamb = () => {
 
 	useEffect(() => {
 		registerCallback("najava", onReceiveNajava);
-		registerCallback("move", onRecievePreviousPlayersMove);
+		registerCallback("next-player", onRecievePreviousPlayersMove);
 	}, []);
 
 	useEffect(() => {
@@ -188,9 +231,9 @@ const Yamb = () => {
 	}, [tabela]);
 
 	return (
-		<div>
+		<div className="relative">
 			<StateContext.Provider value={{ state, setState }}>
-				<div className="flex flex-col items-center justify-center h-screen w-screen">
+				<div className="absolute top-0 flex flex-col items-center justify-center w-screen pt-4 pb-4">
 					<div className="flex flex-row relative z-10">
 						<canvas ref={canvasRef} className="h-[1px] absolute translate-x-[-50%]" />
 						{/* <button ref={buttonRef} className="w-16 h-16 bg-amber-900">
@@ -198,152 +241,87 @@ const Yamb = () => {
 				</button> */}
 					</div>
 					<div style={{ transform: `scale(${scale})`, transformOrigin: "top" }}>
-						<YambBoard
-							scale={scale}
-							tabela={tabela}
-							setTabela={setTabela}
-							updateTabela={updateTabela}
-						/>
+						<YambBoard tabela={tabela} updateTabela={updateTabela} />
+						<button
+							className="flex flex-row w-56 h-56 relative"
+							onClick={(e) => {
+								if (isPickingColorRef.current) return;
+								isPickingColorRef.current = true;
 
-						{state.isMyMove && <DicePicker />}
-					</div>
-					<button
-						onClick={() => {
-							// load png from custom file
+								const button = e.currentTarget as HTMLButtonElement;
+								const rect = button.getBoundingClientRect();
 
-							// load file
-							const input = document.createElement("input");
-							input.type = "file";
-							input.accept = "image/*";
+								const input = document.createElement("input");
+								input.type = "color";
+								input.value = "#eb6434";
+								// Position at the button location (viewport coordinates)
+								input.style.position = "fixed";
+								input.style.left = `${rect.left}px`;
+								input.style.top = `${rect.top}px`;
+								input.style.width = "1px";
+								input.style.height = "1px";
+								input.style.opacity = "0";
+								input.style.zIndex = "2147483647";
 
-							input.onchange = () => {
-								const file = input.files?.[0];
-								if (!file) return;
-
-								const reader = new FileReader();
-
-								reader.onload = (e) => {
-									const dataUrl = e.target?.result as string;
-									const img = new Image();
-
-									img.onload = () => {
-										//const canvas = canvasRef.current!;
-										// create a temp invisible canvas
-										const canvas = document.createElement("canvas");
-										canvas.width = img.width;
-										canvas.height = img.height;
-
-										const ctx = canvas.getContext("2d");
-										if (!ctx) {
-											console.error("Unable to get 2D context");
-											return;
-										}
-
-										ctx.drawImage(img, 0, 0);
-										const imageData = ctx.getImageData(
-											0,
-											0,
-											img.width,
-											img.height
-										);
-										const pixels = imageData.data; // Uint8ClampedArray [r, g, b, a, r, g, b, a, ...]
-
-										// console.log("Pixel data:", pixels);
-										// console.log(`Image dimensions: ${img.width}x${img.height}`);
-
-										let start = -1;
-										let startCnt = 0;
-
-										for (let i = 0; i < pixels.length; i += 4) {
-											const r = pixels[i];
-											const g = pixels[i + 1];
-											const b = pixels[i + 2];
-
-											if (
-												r == "O".charCodeAt(0) &&
-												g == "G".charCodeAt(0) &&
-												b == "N".charCodeAt(0)
-											) {
-												const r2 = pixels[i + 4];
-												const g2 = pixels[i + 5];
-												const b2 = pixels[i + 6];
-												if (
-													r2 == "J".charCodeAt(0) &&
-													g2 == "E".charCodeAt(0) &&
-													b2 == "N".charCodeAt(0)
-												) {
-													console.log("Found O G N J E N");
-													start = i;
-													startCnt++;
-												}
-											}
-										}
-										console.log("startCnt", startCnt);
-										if (start != -1) {
-											let rows = pixels[start - startCnt * 4];
-											let cols = pixels[start - startCnt * 4 + 1];
-											let totalCells = rows * cols;
-
-											console.log(rows, cols, totalCells);
-											start += (startCnt + 1) * 4;
-											for (let r = 0; r < rows; r++) {
-												for (let c = 0; c < cols; c++) {
-													const cellIndex = r * cols + c;
-													const pixelOffset =
-														cellIndex * 4 * startCnt + start;
-
-													let availableNum: number | undefined =
-														0xff - pixels[pixelOffset + 2];
-													let available: boolean | undefined = undefined;
-													let hasValue: boolean | undefined =
-														pixels[pixelOffset + 1] == 0xa2;
-													let val: number | undefined =
-														pixels[pixelOffset];
-													if (hasValue == false) val = undefined;
-													if (availableNum == 2) available = undefined;
-													if (availableNum == 1) available = true;
-													if (availableNum == 0) available = false;
-
-													if (
-														val != undefined ||
-														available != undefined
-													) {
-														console.log(
-															r,
-															c,
-															val,
-															available,
-															pixels[pixelOffset + 1]
-														);
-														updateTabela(r, c, {
-															value: val,
-															isAvailable: available,
-														});
-													}
-												}
-											}
-										}
-									};
-
-									img.src = dataUrl;
+								const cleanup = () => {
+									input.remove();
+									isPickingColorRef.current = false;
 								};
 
-								reader.readAsDataURL(file);
-							};
+								input.addEventListener(
+									"change",
+									() => {
+										generateTailwindShades(input.value);
+										cleanup();
+									},
+									{ once: true }
+								);
+								input.addEventListener("blur", cleanup, { once: true });
 
-							input.click();
-						}}
-					>
-						KOKOOOOO
-					</button>
+								// Append outside the button to avoid bubbling to the button handler
+								document.body.appendChild(input);
+								// Defer trigger to avoid reentrancy with current click handler
+								setTimeout(() => {
+									const anyInput = input as any;
+									if (typeof anyInput.showPicker === "function") {
+										anyInput.showPicker();
+									} else {
+										input.click();
+									}
+								}, 0);
+							}}
+						></button>
+
+						<div className="flex flex-row items-center justify-center mt-6 gap-6">
+							<div className="mb-2 flex flex-col justify-around items-center gap-4">
+								<button className="w-[50px] h-[50px] bg-main-900 rounded-md border-2 border-main-600 p-1">
+									<img src="assets/large-paint-brush.svg"></img>
+								</button>
+								{state.isMyMove && state.roundIndex > 0 && (
+									<button
+										className="w-[50px] h-[50px] bg-main-900 rounded-md border-2 border-main-600 p-1"
+										onClick={() =>
+											setState((prev) => ({ ...prev, blackout: true }))
+										}
+									>
+										<img src="assets/interdiction.svg"></img>
+									</button>
+								)}
+							</div>
+							{state.isMyMove && <DicePicker />}
+						</div>
+					</div>
+
+					{/* <button onClick={saveToLocalStorage}>Save to local storage</button> */}
 				</div>
 			</StateContext.Provider>
 		</div>
 	);
 };
 
-const PreviousSaveBoard = () => {
-	const [tabela, setTabela] = useState<Cell[][]>(() => Array.from({ length: 16 }, () => []));
+const App = () => {
+	const [hasStarted, setHasStarted] = useState(false);
+	const [tabela, setTabela] = useState<Cell[][]>(defaultTabela());
 
 	const updateTabela = (row: number, col: number, value: Cell) => {
 		setTabela((prev) => {
@@ -353,39 +331,13 @@ const PreviousSaveBoard = () => {
 		});
 	};
 
-	const [scale, setScale] = useState(1);
-
-	useEffect(() => {
-		const updateScale = () => {
-			const width = window.innerWidth;
-			setScale(width >= 600 ? 1.0 : (0.9 * width) / 600);
-		};
-
-		updateScale();
-		window.addEventListener("resize", updateScale);
-		return () => window.removeEventListener("resize", updateScale);
-	}, []);
-
 	return (
 		<div>
-			<YambBoard
-				scale={scale}
-				tabela={tabela}
-				setTabela={setTabela}
-				updateTabela={updateTabela}
-			/>
-		</div>
-	);
-};
-
-const App = () => {
-	const [hasStarted, setHasStarted] = useState(false);
-
-	return (
-		<div>
-			<NetworkingProvider>
-				{!hasStarted ? <NetworkingMenu setHasStarted={setHasStarted} /> : <Yamb />}
-			</NetworkingProvider>
+			<TabelaContext.Provider value={{ tabela, updateTabela }}>
+				<NetworkingProvider>
+					{!hasStarted ? <NetworkingMenu setHasStarted={setHasStarted} /> : <Yamb />}
+				</NetworkingProvider>
+			</TabelaContext.Provider>
 		</div>
 	);
 };

@@ -1,8 +1,11 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import Peer from "peerjs";
 import QRCode from "qrcode";
 import { useNetworking, type PeerData } from "./NetworkingContext";
-import { type Cell, ColumnNames, RowNames, YambBoard } from "./Board";
+import { ReadonlyYambBoard } from "./ReadonlyBoard";
+import { defaultTabela } from "./BoardConstants";
+import { type Cell } from "./BoardConstants";
+import { TabelaContext } from "./App";
 
 export const NetworkingMenu = ({
 	setHasStarted,
@@ -51,10 +54,10 @@ export const NetworkingMenu = ({
 	const startGame = () => {
 		sharePeerData();
 		setHasStarted(true);
-		broadcastMessage({ type: "start-game" });
+		broadcastMessage("start-game", {});
 	};
 
-	const onReceiveStartGame = (incoming: boolean, conn: any, data: any) => {
+	const onReceiveStartGame = (incoming: boolean, _conn: any, data: any) => {
 		if (!incoming) {
 			console.log("start game", data);
 			setHasStarted(true);
@@ -82,7 +85,7 @@ export const NetworkingMenu = ({
 											<button
 												onClick={joinHost}
 												disabled={!name.trim() || !hostId.trim()}
-												className="bg-blue-500 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+												className="bg-main-600 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-main-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
 											>
 												Join
 											</button>
@@ -111,7 +114,7 @@ export const NetworkingMenu = ({
 									</div>
 								) : (
 									<div className="flex flex-col gap-4 sm:gap-6">
-										<InvideLinkPanel peerId={peerId} />
+										<InviteLinkPanel peerId={peerId} />
 										<button
 											onClick={startGame}
 											className="bg-purple-500 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-purple-600 transition-colors"
@@ -140,7 +143,7 @@ export const NetworkingMenu = ({
 								broadcastMessage(input);
 								setInput("");
 							}}
-							className="bg-blue-500 text-white px-4 py-1 rounded-md hover:bg-blue-600"
+							className="bg-main-600 text-white px-4 py-1 rounded-md hover:bg-main-600"
 						>
 							Send
 						</button>
@@ -182,7 +185,128 @@ export const NetworkingMenu = ({
 };
 
 const PreviousSaveBoard = () => {
-	return <div>AKKKKKKKKKKKKKKKKKKKKK</div>;
+	const { tabela, updateTabela } = useContext(TabelaContext);
+	const [isSaveLoaded, setIsSaveLoaded] = useState(false);
+
+	return (
+		<div className="flex flex-col items-center justify-center justify-self-center">
+			<button
+				onClick={() => {
+					// load file
+					const input = document.createElement("input");
+					input.type = "file";
+					input.accept = "image/*";
+
+					input.onchange = () => {
+						const file = input.files?.[0];
+						if (!file) return;
+
+						const reader = new FileReader();
+
+						reader.onload = (e) => {
+							const dataUrl = e.target?.result as string;
+							const img = new Image();
+
+							img.onload = () => {
+								//const canvas = canvasRef.current!;
+								// create a temp invisible canvas
+								const canvas = document.createElement("canvas");
+								canvas.width = img.width;
+								canvas.height = img.height;
+
+								const ctx = canvas.getContext("2d");
+								if (!ctx) {
+									console.error("Unable to get 2D context");
+									return;
+								}
+
+								ctx.drawImage(img, 0, 0);
+								const imageData = ctx.getImageData(0, 0, img.width, img.height);
+								const pixels = imageData.data; // Uint8ClampedArray [r, g, b, a, r, g, b, a, ...]
+
+								// console.log("Pixel data:", pixels);
+								// console.log(`Image dimensions: ${img.width}x${img.height}`);
+
+								let start = -1;
+								let startCnt = 0;
+
+								const isPixelString = (i: number, s: string) => {
+									if (s.length != 3 || i < 0 || i >= pixels.length) return false;
+									const r = pixels[i];
+									const g = pixels[i + 1];
+									const b = pixels[i + 2];
+									return (
+										r == s.charCodeAt(0) &&
+										g == s.charCodeAt(1) &&
+										b == s.charCodeAt(2)
+									);
+								};
+
+								for (let i = 0; i < pixels.length; i += 4) {
+									const r = pixels[i];
+									if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
+										console.log("Found O G N J E N");
+										start = i;
+										startCnt++;
+									}
+								}
+								console.log("startCnt", startCnt);
+								if (start != -1) {
+									let rows = pixels[start - startCnt * 4];
+									let cols = pixels[start - startCnt * 4 + 1];
+									let totalCells = rows * cols;
+
+									console.log(rows, cols, totalCells);
+									start += (startCnt + 1) * 4;
+									for (let r = 0; r < rows; r++) {
+										for (let c = 0; c < cols; c++) {
+											const cellIndex = r * cols + c;
+											const pixelOffset = cellIndex * 4 * startCnt + start;
+
+											let availableNum: number | undefined =
+												0xff - pixels[pixelOffset + 2];
+											let available: boolean | undefined = undefined;
+											let hasValue: boolean | undefined =
+												pixels[pixelOffset + 1] == 0xa2;
+											let val: number | undefined = pixels[pixelOffset];
+											if (hasValue == false) val = undefined;
+											if (availableNum == 2) available = undefined;
+											if (availableNum == 1) available = true;
+											if (availableNum == 0) available = false;
+
+											if (val != undefined || available != undefined) {
+												console.log(
+													r,
+													c,
+													val,
+													available,
+													pixels[pixelOffset + 1]
+												);
+												updateTabela(r, c, {
+													value: val,
+													isAvailable: available,
+												});
+											}
+										}
+									}
+								}
+								setIsSaveLoaded(true);
+							};
+
+							img.src = dataUrl;
+						};
+
+						reader.readAsDataURL(file);
+					};
+
+					input.click();
+				}}
+			>
+				Load image save
+			</button>
+			{isSaveLoaded && <ReadonlyYambBoard tabela={tabela} />}
+		</div>
+	);
 };
 
 const PeerDataPanel = ({
@@ -256,7 +380,7 @@ const PeerDataPanel = ({
 							draggedIndex === index
 								? "bg-gray-200"
 								: dragOverIndex === index
-								? "border-dashed border-blue-500 bg-blue-50"
+								? "border-dashed border-main-600 bg-main-50"
 								: "border-gray-300 bg-white hover:bg-gray-50"
 						}`}
 					>
@@ -271,7 +395,7 @@ const PeerDataPanel = ({
 	);
 };
 
-const InvideLinkPanel = ({ peerId }: { peerId: string }) => {
+const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 	``;
 	const [qrCodeUrl, setQrCodeUrl] = useState("");
 	const [inviteLink, setInviteLink] = useState("");
