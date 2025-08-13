@@ -102,7 +102,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	const onReceivePeerData = (incoming: boolean, _conn: any, data: any) => {
 		if (!incoming) {
-			console.log(`Received peer data: ${data.peerData}`);
+			//console.log(`Received peer data: ${data.peerData}`);
 			const peers = Array.from(data.peerData.keys?.() ?? []) as string[];
 			if (peers.length) connectToPeers(peers);
 			setPeerData(data.peerData);
@@ -111,7 +111,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	const onReceiveName = (incoming: boolean, conn: any, data: any) => {
 		if (incoming) {
-			console.log(`Received name. ${conn.peer} is named: ${data.name}`);
+			//console.log(`Received name. ${conn.peer} is named: ${data.name}`);
 			setPeerData((prev) =>
 				prev.map((p) => (p.id === conn.peer ? { ...p, name: data.name } : p))
 			);
@@ -155,11 +155,11 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	const setupConnection = (conn: any, incoming = false) => {
 		conn.on("open", () => {
-			console.log(`Connected to ${conn.peer}`);
+			//console.log(`Connected to ${conn.peer}`);
 			setConnections((prev) => new Map(prev.set(conn.peer, conn)));
 			if (!incoming) {
 				conn.send({ type: "name", name });
-				console.log(`Sent name: ${name}`);
+				//console.log(`Sent name: ${name}`);
 			}
 			setPeerData((prev) => [...prev, { id: conn.peer, name: "", index: prev.length }]);
 
@@ -179,20 +179,15 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	const sharePeerData = () => {
 		connections.forEach((conn) => conn.send({ type: "peer-data", peerData }));
-		console.log("Shared peer data.");
+		//console.log("Shared peer data.");
 	};
 
 	const sendMessageToNextPlayer = (type: string, data: any) => {
 		// find the index of me
-		console.log(peerData);
 		const me = peerData.findIndex((p) => p.id === peerId);
 		const nextPlayer = peerData[(me + 1) % peerData.length];
-		console.log(me);
-		console.log(nextPlayer);
 		if (nextPlayer) {
 			const conn = connections.get(nextPlayer.id);
-			console.log(nextPlayer.id);
-			console.log(conn);
 			if (conn) {
 				conn.send({ type, data });
 			}

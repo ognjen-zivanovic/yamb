@@ -8,7 +8,7 @@ import {
 	type RowName,
 	type Cell,
 } from "./BoardConstants";
-import { StateContext } from "./App";
+import { StateContext, type State } from "./App";
 import { useNetworking } from "./NetworkingContext";
 
 const SetNewAvailable = (
@@ -63,8 +63,8 @@ const SetNewAvailable = (
 
 const HeaderRow = () => {
 	return (
-		<div className="flex flex-row h-[calc(6*100%/118)]">
-			<div className="bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center text-[1.55rem] flex items-center justify-center">
+		<div className="flex h-[calc(6*100%/118)] flex-row">
+			<div className="border-1 flex h-full w-[calc(12*100%/106)] items-center justify-center border-main-500 bg-white text-center text-[1.55rem]">
 				IGRA
 			</div>
 			{Array.from({ length: 10 }).map((_, index) => (
@@ -79,7 +79,7 @@ const HeaderRow = () => {
 					{headerIcons[index % headerIcons.length]}
 				</div>
 			))}
-			<div className="bg-white border-main-500 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center flex items-center justify-center">
+			<div className="border-1 flex h-full w-[calc(14*100%/106)] items-center justify-center border-main-500 bg-white text-center text-[1.6rem]">
 				YAMB
 			</div>
 		</div>
@@ -102,7 +102,7 @@ const Row = ({
 	const { state, setState } = useContext(StateContext);
 
 	return (
-		<div className="flex flex-row h-[calc(7*100%/118)]">
+		<div className="flex h-[calc(7*100%/118)] flex-row">
 			<div
 				className={`bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center align-middle flex items-center justify-center
 				
@@ -124,33 +124,13 @@ const Row = ({
 					) {
 						setState((prev) => ({ ...prev, najava: rowIndex }));
 						sendMessageToNextPlayer("najava", rowIndex);
-						console.log("najava", rowIndex);
 					}
 				}}
 			>
 				{rowIcons[rowIndex % rowIcons.length]}
 			</div>
 			{Array.from({ length: 10 }).map((_, colIndex) => {
-				let isActive = tabela[rowIndex][colIndex]?.isAvailable && state.value[rowIndex] > 0;
-				if (colIndex == ColumnNames.Najava && state.najava != rowIndex) isActive = false;
-				if (colIndex == ColumnNames.Dirigovana && state.dirigovana != rowIndex)
-					isActive = false;
-				if (colIndex == ColumnNames.Rucna && state.roundIndex != 1) isActive = false;
-				if (state.najava != undefined && colIndex != ColumnNames.Najava) isActive = false;
-				if (state.dirigovana != undefined && colIndex != ColumnNames.Dirigovana)
-					isActive = false;
-				if (
-					state.najava != undefined &&
-					colIndex == ColumnNames.Najava &&
-					rowIndex == state.najava
-				)
-					isActive = true;
-				if (
-					state.dirigovana != undefined &&
-					colIndex == ColumnNames.Dirigovana &&
-					rowIndex == state.dirigovana
-				)
-					isActive = true;
+				let isActive = isCellActive(tabela, rowIndex, colIndex, state);
 
 				return (
 					<div
@@ -192,7 +172,7 @@ const Row = ({
 								isAvailable: false,
 							});
 							SetNewAvailable(tabela, updateTabela, rowIndex, colIndex);
-							setState({ value: [], roundIndex: 0, isMyMove: false });
+							setState({ value: [], roundIndex: 0, isMyMove: true });
 							sendMessageToNextPlayer("next-player", {});
 							broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 						}}
@@ -230,8 +210,6 @@ export const YambBoard = ({
 	const { sendMessageToNextPlayer, broadcastMessage } = useNetworking();
 
 	useEffect(() => {
-		console.log("FIRSHLSLSL");
-		console.log(tabela);
 		const calculateSumOfFirstSum = (colIndex: number) => {
 			if (tabela[RowNames.Suma1][colIndex]?.value == undefined) {
 				let cnt = 0;
@@ -305,12 +283,11 @@ export const YambBoard = ({
 				calculateSumOfRow(rowName);
 			}
 		}
-		console.log("HELOOOOO");
 	}, [tabela]); // this shit is probably slow as fuck
 
 	return (
 		<>
-			<div className="flex flex-col border-main-500 border-4 border-solid rounded-md overflow-clip w-[600px] aspect-[106/118] min-h-0">
+			<div className="flex aspect-[106/118] min-h-0 w-[600px] flex-col overflow-clip rounded-md border-4 border-solid border-main-500">
 				<HeaderRow />
 				{Array.from({ length: 16 }).map((_, rowIndex) => (
 					<Row
@@ -326,3 +303,21 @@ export const YambBoard = ({
 		</>
 	);
 };
+
+export function isCellActive(tabela: Cell[][], rowIndex: number, colIndex: number, state: State) {
+	let isActive = tabela[rowIndex][colIndex]?.isAvailable && state.value[rowIndex] > 0;
+	if (colIndex == ColumnNames.Najava && state.najava != rowIndex) isActive = false;
+	if (colIndex == ColumnNames.Dirigovana && state.dirigovana != rowIndex) isActive = false;
+	if (colIndex == ColumnNames.Rucna && state.roundIndex != 1) isActive = false;
+	if (state.najava != undefined && colIndex != ColumnNames.Najava) isActive = false;
+	if (state.dirigovana != undefined && colIndex != ColumnNames.Dirigovana) isActive = false;
+	if (state.najava != undefined && colIndex == ColumnNames.Najava && rowIndex == state.najava)
+		isActive = true;
+	if (
+		state.dirigovana != undefined &&
+		colIndex == ColumnNames.Dirigovana &&
+		rowIndex == state.dirigovana
+	)
+		isActive = true;
+	return isActive;
+}

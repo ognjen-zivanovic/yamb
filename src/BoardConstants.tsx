@@ -37,6 +37,36 @@ export const RowNames = {
 	Suma3: 15,
 } as const;
 
+export const ReverseRowNames = {
+	0: "Jedinice",
+	1: "Dvojke",
+	2: "Trojke",
+	3: "Cetvorke",
+	4: "Petice",
+	5: "Sestice",
+	6: "Suma1",
+	7: "Maksimum",
+	8: "Minimum",
+	9: "Suma2",
+	10: "Kenta",
+	11: "Triling",
+	12: "Ful",
+	13: "Kare",
+	14: "Yamb",
+	15: "Suma3",
+};
+
+export const ReverseColumnNames = {
+	0: "OdGore",
+	1: "OdDole",
+	2: "Slobodna",
+	3: "Najava",
+	4: "Rucna",
+	5: "Dirigovana",
+	6: "OdSredine",
+	7: "OdGoreIDole",
+};
+
 export type RowName = (typeof RowNames)[keyof typeof RowNames];
 
 export const headerIcons = [
@@ -83,6 +113,7 @@ export const defaultTabela = (): Cell[][] => {
 
 	for (let i = 0; i < 15; i++) {
 		if (i === RowNames.Suma1 || i === RowNames.Suma2) continue;
+		tabela[i][ColumnNames.Slobodna] = { value: undefined, isAvailable: true };
 		tabela[i][ColumnNames.Najava] = { value: undefined, isAvailable: true };
 		tabela[i][ColumnNames.Rucna] = { value: undefined, isAvailable: true };
 		tabela[i][ColumnNames.Dirigovana] = { value: undefined, isAvailable: true };

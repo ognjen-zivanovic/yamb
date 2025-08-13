@@ -1,6 +1,8 @@
 import { useContext, useEffect, useState } from "react";
-import { type State, StateContext } from "./App";
-import { RowNames } from "./BoardConstants";
+import { type State, StateContext, TabelaContext } from "./App";
+import { ColumnNames, ReverseColumnNames, ReverseRowNames, RowNames } from "./BoardConstants";
+import { isCellActive } from "./Board";
+import { OpenAI } from "openai";
 
 const diceImages = [
 	null,
@@ -12,18 +14,162 @@ const diceImages = [
 	"assets/dice-six-faces-six.svg",
 ];
 
+const openai = new OpenAI({
+	apiKey: import.meta.env.VITE_OPENAI_API_KEY, // Store your API key in .env
+	dangerouslyAllowBrowser: true,
+});
+
 export const DicePicker = () => {
+	//const {
+	//	rolledDice,
+	//	chosenDice,
+	//	numChosenDice,
+	//	setRolledDice,
+	//	setChosenDice,
+	//	setNumChosenDice,
+	//} = useContext(DiceContext);
+
 	const [rolledDice, setRolledDice] = useState<number[]>([]);
 	const [chosenDice, setChosenDice] = useState<number[]>([]);
 	const [numChosenDice, setNumChosenDice] = useState(0);
 
 	const { state, setState } = useContext(StateContext);
+	const { tabela } = useContext(TabelaContext);
+
+	const [gptInstruction, setGptInstruction] = useState(`
+	  You are a Yamb assistant.
+	  
+	  Rules:
+	  - The player has up to 3 rolls each turn (rollNumber 1 to 3).
+	  - After each roll (except the last), the player can keep any dice they want and reroll the rest.
+	  - "dice" includes all dice currently held and just rolled.
+	  - On rolls 1 and 2, respond with dice to roll again.
+	  - On roll 3, respond with the scoring category to select.
+	  - Use the provided "availableCells" list; "score" values are final scores, do NOT recalculate them. They are the current value, not the maximum possible value.
+	  - Respond ONLY in JSON matching this format:
+	  - Whenn keeping dice, all other dice are rolled again.
+	  
+	  If choosing dice to keep (roll 1 or 2):
+	  {
+		"action": "keep",
+		"diceToKeep": [array of integers],
+		"reason": "short explanation"
+	  }
+	  
+	  If selecting a scoring category (roll 3):
+	  {
+		"action": "score",
+		"category": { "row": string, "col": string },
+		"reason": "short explanation"
+	  }
+	  
+	  No extra text, no markdown, no explanations outside JSON.
+	  `);
+
+	const [gptSystem, setGptSystem] = useState(
+		"You are a Yamb assistant. Always respond only with strict JSON, as the user defines. Do not perform any calculations based on dice values. The values shown in availableCells are already final, pre-calculated totals. You must not recalculate them or second-guess them."
+	);
+
+	const generatePrompt = () => {
+		let prompt: any = {};
+		prompt["game"] = "Yamb";
+
+		// Combine chosenDice and rolledDice to represent all dice currently held + rolled this turn
+		const dice = [...chosenDice, ...rolledDice];
+
+		prompt["turn"] = {
+			dice,
+			rollNumber: state.roundIndex, // 1-based roll number (1 to 3)
+		};
+
+		prompt["availableCells"] = [];
+
+		for (let rowIndex = 0; rowIndex < 16; rowIndex++) {
+			for (let colIndex = 0; colIndex < 8; colIndex++) {
+				let isActive = isCellActive(tabela, rowIndex, colIndex, state);
+				if (!isActive) continue;
+
+				// Skip sum rows as per your logic
+				if (
+					rowIndex === RowNames.Suma1 ||
+					rowIndex === RowNames.Suma2 ||
+					rowIndex === RowNames.Suma3
+				) {
+					continue;
+				}
+
+				// Use 0 if not scored yet
+				const value = state.value[rowIndex] === -1 ? 0 : state.value[rowIndex];
+
+				prompt["availableCells"].push({
+					row: ReverseRowNames[rowIndex], // string keys for row
+					col: ReverseColumnNames[colIndex], // string keys for col
+					score: value,
+				});
+			}
+		}
+
+		// Full instruction for the model
+		prompt["instruction"] = gptInstruction;
+
+		console.log(JSON.stringify(prompt));
+		return prompt;
+	};
+
+	const callYambAssistant = async () => {
+		const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+			{
+				role: "system",
+				content: gptSystem,
+			},
+			{
+				role: "user",
+				content: JSON.stringify(generatePrompt()),
+			},
+		];
+
+		const response = await openai.chat.completions.create({
+			model: "gpt-3.5-turbo-1106",
+			messages,
+			response_format: { type: "json_object" },
+		});
+
+		const reply = response.choices[0].message.content;
+
+		if (reply) {
+			const result = JSON.parse(reply);
+			console.log("✅ AI Response:", result);
+
+			// parse the response
+			if (result.action === "keep") {
+				setRolledDice((prev) => [...chosenDice, ...prev]);
+				setChosenDice([]);
+				for (let i = 0; i < result.diceToKeep.length; i++) {
+					const diceValue = result.diceToKeep[i];
+					setChosenDice((prev) => {
+						return [...prev, diceValue];
+					});
+
+					setRolledDice((prev) => {
+						let copy = [...prev];
+						const index = copy.indexOf(diceValue);
+						copy.splice(index, 1);
+						return copy;
+					});
+				}
+				setNumChosenDice(result.diceToKeep.length);
+			}
+			return result;
+		} else {
+			throw new Error("No response from AI");
+		}
+	};
 
 	useEffect(() => {
 		if (state.roundIndex == 0) {
-			setRolledDice([]);
-			setChosenDice([]);
 			setNumChosenDice(0);
+			setChosenDice([]);
+			setRolledDice([]);
 		}
 	}, [state.roundIndex]);
 
@@ -40,6 +186,7 @@ export const DicePicker = () => {
 			dice.push(rolledDice[i]);
 		}
 		if (dice.length == 0) {
+			setState((prev) => ({ ...prev, value: [] }));
 			return;
 		}
 		for (let i = 0; i < 6; i++) {
@@ -92,7 +239,7 @@ export const DicePicker = () => {
 		newValues[RowNames.Minimum] = Math.max(newValues[RowNames.Minimum], minSum);
 		newValues[RowNames.Maksimum] = Math.max(newValues[RowNames.Maksimum], maxSum);
 		setState((prev) => ({ ...prev, value: newValues }));
-		console.log(newValues);
+		//console.log(newValues);
 	}, [rolledDice]); //TODO: fix this make this faster
 
 	const rollDice = () => {
@@ -108,11 +255,11 @@ export const DicePicker = () => {
 
 	return (
 		<div className="flex flex-row items-center justify-center gap-6">
-			<div className="border-2 border-main-600 rounded-md f-full">
-				<div className="flex flex-wrap gap-4 p-4 bg-main-500 min-h-[82px] w-[412px]">
+			<div className="f-full rounded-md border-2 border-main-600">
+				<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-500 p-4">
 					{chosenDice.map((num, index) => (
 						<img
-							className="bg-black rounded-md"
+							className="rounded-md bg-black"
 							key={index}
 							src={diceImages[num]!}
 							alt={`Dice ${num}`}
@@ -126,10 +273,10 @@ export const DicePicker = () => {
 						/>
 					))}
 				</div>
-				<div className="flex flex-wrap gap-4 p-4 bg-main-200 min-h-[82px] w-[412px]">
+				<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-200 p-4">
 					{rolledDice.map((num, index) => (
 						<img
-							className="bg-black rounded-md"
+							className="rounded-md bg-black"
 							key={index}
 							src={diceImages[num]!}
 							alt={`Dice ${num}`}
@@ -144,20 +291,28 @@ export const DicePicker = () => {
 					))}
 				</div>
 			</div>
-			<div className="flex flex-col items-center justify-around">
+			<div className="flex flex-col items-center justify-around gap-4">
 				<div className="text-center">
 					<p className="text-xl font-bold">
 						{state.roundIndex == 0 ? "" : "Round " + state.roundIndex + "/3"}
 					</p>
 				</div>
-				<button onClick={rollDice} className="font-bold text-xl w-[50px] h-[50px]">
+				<button onClick={rollDice} className="h-[50px] w-[50px] text-xl font-bold">
 					<img
 						src="assets/rolling-dices.svg"
 						alt="Roll"
 						width={50}
 						height={50}
-						className="bg-main-900 rounded-md border-2 border-main-600"
+						className="rounded-md border-2 border-main-600 bg-main-900"
 					/>
+				</button>
+				<button
+					className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+					onClick={() => {
+						callYambAssistant();
+					}}
+				>
+					<img src="assets/robot-antennas (1).svg"></img>
 				</button>
 			</div>
 		</div>

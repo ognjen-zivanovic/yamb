@@ -59,7 +59,7 @@ export const NetworkingMenu = ({
 
 	const onReceiveStartGame = (incoming: boolean, _conn: any, data: any) => {
 		if (!incoming) {
-			console.log("start game", data);
+			//console.log("start game", data);
 			setHasStarted(true);
 		}
 	};
@@ -67,25 +67,25 @@ export const NetworkingMenu = ({
 	registerCallback("start-game", onReceiveStartGame);
 
 	return (
-		<div className="min-h-screen bg-gray-50 flex justify-center">
-			<div className="w-full max-w-2xl mx-auto p-3 sm:p-6">
-				<div className="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+		<div className="flex min-h-screen justify-center bg-gray-50">
+			<div className="mx-auto w-full max-w-2xl p-3 sm:p-6">
+				<div className="rounded-lg bg-white p-4 shadow-lg sm:p-8">
 					{!hasJoinedHost && (
 						<>
 							<div>
 								{!isHost ? (
 									<div className="flex flex-col gap-4 sm:gap-6">
-										<div className="flex flex-col sm:flex-row gap-3">
+										<div className="flex flex-col gap-3 sm:flex-row">
 											<input
 												placeholder="Host ID"
 												value={hostId}
 												onChange={(e) => setHostId(e.target.value)}
-												className="border-2 border-gray-300 rounded-md px-3 py-2 flex-1"
+												className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
 											/>
 											<button
 												onClick={joinHost}
 												disabled={!name.trim() || !hostId.trim()}
-												className="bg-main-600 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-main-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+												className="rounded-md bg-main-600 px-4 py-2 text-white transition-colors hover:bg-main-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 											>
 												Join
 											</button>
@@ -93,7 +93,7 @@ export const NetworkingMenu = ({
 										{!hostId && (
 											<button
 												onClick={startHost}
-												className="bg-green-500 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 transition-colors"
+												className="rounded-md bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 												disabled={!name.trim()}
 											>
 												Become Host
@@ -106,7 +106,7 @@ export const NetworkingMenu = ({
 														placeholder="Your name"
 														value={name}
 														onChange={(e) => setName(e.target.value)}
-														className="border-2 border-gray-300 rounded-md px-3 py-2 flex-1"
+														className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
 													/>
 												</div>
 											</div>
@@ -117,7 +117,7 @@ export const NetworkingMenu = ({
 										<InviteLinkPanel peerId={peerId} />
 										<button
 											onClick={startGame}
-											className="bg-purple-500 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-purple-600 transition-colors"
+											className="rounded-md bg-purple-500 px-4 py-2 text-white transition-colors hover:bg-purple-600 sm:px-6"
 										>
 											Start game!
 										</button>
@@ -136,29 +136,29 @@ export const NetworkingMenu = ({
 									setInput("");
 								}
 							}}
-							className="border-2 border-gray-300 rounded-md px-2 py-1 flex-1"
+							className="flex-1 rounded-md border-2 border-gray-300 px-2 py-1"
 						/>
 						<button
 							onClick={() => {
 								broadcastMessage(input);
 								setInput("");
 							}}
-							className="bg-main-600 text-white px-4 py-1 rounded-md hover:bg-main-600"
+							className="rounded-md bg-main-600 px-4 py-1 text-white hover:bg-main-600"
 						>
 							Send
 						</button>
 					</div> */}
 							{/* make this collapsable */}
-							{/* <details className="border-2 border-gray-300 rounded-lg p-4 sm:p-6 bg-gray-50">
-						<summary className="font-bold mb-3 sm:mb-4 text-base sm:text-lg cursor-pointer">
+							{/* <details className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
+						<summary className="mb-3 cursor-pointer text-base font-bold sm:mb-4 sm:text-lg">
 							Log
 						</summary>
 						<div>
-							<ul className="max-h-60 overflow-y-auto space-y-2 text-sm">
+							<ul className="max-h-60 space-y-2 overflow-y-auto text-sm">
 								{log.map((line, i) => (
 									<li
 										key={i}
-										className="border-b border-gray-200 pb-2 break-words"
+										className="break-words border-b border-gray-200 pb-2"
 									>
 										{line}
 									</li>
@@ -171,7 +171,7 @@ export const NetworkingMenu = ({
 							{isHost && (
 								<PeerDataPanel peerData={peerData} setPeerData={setPeerData} />
 							)}
-							<p className="text-base sm:text-lg text-gray-400">
+							<p className="text-base text-gray-400 sm:text-lg">
 								<strong>Your ID:</strong> {peerId}
 							</p>
 						</>
@@ -245,18 +245,16 @@ const PreviousSaveBoard = () => {
 								for (let i = 0; i < pixels.length; i += 4) {
 									const r = pixels[i];
 									if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
-										console.log("Found O G N J E N");
+										//console.log("Found O G N J E N");
 										start = i;
 										startCnt++;
 									}
 								}
-								console.log("startCnt", startCnt);
 								if (start != -1) {
 									let rows = pixels[start - startCnt * 4];
 									let cols = pixels[start - startCnt * 4 + 1];
 									let totalCells = rows * cols;
 
-									console.log(rows, cols, totalCells);
 									start += (startCnt + 1) * 4;
 									for (let r = 0; r < rows; r++) {
 										for (let c = 0; c < cols; c++) {
@@ -275,13 +273,6 @@ const PreviousSaveBoard = () => {
 											if (availableNum == 0) available = false;
 
 											if (val != undefined || available != undefined) {
-												console.log(
-													r,
-													c,
-													val,
-													available,
-													pixels[pixelOffset + 1]
-												);
 												updateTabela(r, c, {
 													value: val,
 													isAvailable: available,
@@ -364,8 +355,8 @@ const PeerDataPanel = ({
 		setDragOverIndex(null);
 	};
 	return (
-		<div className="border-2 border-gray-300 rounded-lg p-4 sm:p-6 bg-gray-50 mt-4 sm:mt-6">
-			<h3 className="font-bold mb-3 sm:mb-4 text-base sm:text-lg">Peer Data</h3>
+		<div className="mt-4 rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:mt-6 sm:p-6">
+			<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Peer Data</h3>
 			<ul className="space-y-3">
 				{peerData.map((p, index) => (
 					<li
@@ -384,7 +375,7 @@ const PeerDataPanel = ({
 								: "border-gray-300 bg-white hover:bg-gray-50"
 						}`}
 					>
-						<div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+						<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
 							<span className="font-medium">{p.name || "Unnamed"}</span>
 							<span className="text-xs text-gray-500">({p.id})</span>
 						</div>
@@ -418,17 +409,17 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 
 	return (
 		inviteLink && (
-			<div className="border-2 border-gray-300 rounded-lg p-4 sm:p-6 bg-gray-50">
-				<h3 className="font-bold mb-3 sm:mb-4 text-base sm:text-lg">Invite Link:</h3>
-				<div className="flex flex-col sm:flex-row gap-3 mb-4">
+			<div className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
+				<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Invite Link:</h3>
+				<div className="mb-4 flex flex-col gap-3 sm:flex-row">
 					<input
 						value={inviteLink}
 						readOnly
-						className="border border-gray-300 rounded-md px-3 py-2 flex-1 text-sm"
+						className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
 					/>
 					<button
 						onClick={() => navigator.clipboard.writeText(inviteLink)}
-						className="bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-gray-600 text-sm transition-colors"
+						className="rounded-md bg-gray-500 px-3 py-2 text-sm text-white transition-colors hover:bg-gray-600 sm:px-4"
 					>
 						Copy
 					</button>
@@ -436,13 +427,13 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 
 				{qrCodeUrl && (
 					<div className="flex flex-col items-center">
-						<h4 className="font-semibold mb-3">QR Code:</h4>
+						<h4 className="mb-3 font-semibold">QR Code:</h4>
 						<img
 							src={qrCodeUrl}
 							alt="QR Code"
-							className="border border-gray-300 rounded-md max-w-full"
+							className="max-w-full rounded-md border border-gray-300"
 						/>
-						<p className="text-xs text-gray-600 mt-2 text-center">
+						<p className="mt-2 text-center text-xs text-gray-600">
 							Scan to join automatically
 						</p>
 					</div>

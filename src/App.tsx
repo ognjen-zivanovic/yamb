@@ -25,7 +25,8 @@ export interface State {
 	blackout?: boolean;
 }
 
-function generateTailwindShades(baseColor: string) {
+function generateTailwindShades(baseColor?: string) {
+	if (!baseColor) return;
 	// These are roughly how Tailwind's default shades are spaced
 	const scale = chroma.scale(["#fff", baseColor, "#000"]).mode("lrgb");
 
@@ -44,7 +45,6 @@ function generateTailwindShades(baseColor: string) {
 	};
 
 	for (const [key, value] of Object.entries(colors)) {
-		console.log("--main-" + key, value);
 		document.documentElement.style.setProperty("--main-" + key, value);
 	}
 }
@@ -73,8 +73,7 @@ const Yamb = () => {
 	const { tabela, updateTabela } = useContext(TabelaContext);
 
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const buttonRef = useRef<HTMLButtonElement>(null);
-	const isPickingColorRef = useRef(false);
+	const colorPickerRef = useRef<HTMLInputElement>(null);
 
 	const { peerData, setPeerData, peerId, registerCallback } = useNetworking();
 	useEffect(() => {
@@ -102,7 +101,6 @@ const Yamb = () => {
 		setState((prev) => ({ ...prev, isMyMove: true }));
 	};
 	const onReceiveNajava = (_incoming: boolean, _conn: any, data: any) => {
-		console.log("najava", data);
 		setState((prev) => ({ ...prev, dirigovana: data.data as RowName }));
 	};
 
@@ -111,8 +109,17 @@ const Yamb = () => {
 		registerCallback("next-player", onRecievePreviousPlayersMove);
 	}, []);
 
+	function getRandomColor() {
+		var letters = "0123456789ABCDEF";
+		var color = "#";
+		for (var i = 0; i < 6; i++) {
+			color += letters[Math.floor(Math.random() * 16)];
+		}
+		return color;
+	}
 	useEffect(() => {
 		const updateScale = () => {
+			generateTailwindShades(getRandomColor());
 			const width = window.innerWidth;
 			setScale(width >= 600 ? 1.0 : (0.9 * width) / 600);
 		};
@@ -161,9 +168,6 @@ const Yamb = () => {
 			data[2 * 4 + 2] = "N".charCodeAt(0) & 0xff;
 			data[2 * 4 + 3] = 255;
 
-			// console.log(data[0 + 0], data[0 + 1], data[0 + 2], data[0 + 3]);
-			// console.log(data[1 * 4 + 0], data[1 * 4 + 1], data[1 * 4 + 2], data[1 * 4 + 3]);
-			// console.log(data[2 * 4 + 0], data[2 * 4 + 1], data[2 * 4 + 2], data[2 * 4 + 3]);
 			// Encode cells row-major into pixels
 			for (let r = 0; r < rows; r++) {
 				for (let c = 0; c < cols; c++) {
@@ -191,7 +195,6 @@ const Yamb = () => {
 
 					// pack int16 big-endian into R,G
 					const i8 = value & 0xff;
-					// console.log(u16);
 					available = 0xff - available;
 
 					// 50a2ff
@@ -210,7 +213,6 @@ const Yamb = () => {
 				data[i + 3] = 255;
 			}
 
-			// console.log(data);
 			ctx.putImageData(imageData, 0, 0);
 
 			// 4) Save as PNG
@@ -218,7 +220,6 @@ const Yamb = () => {
 			//let thing = buttonRef.current!;
 			//thing.onclick = () => {
 			//	let canvas = canvasRef.current!;
-			//	console.log("SHIIIIIIIIIIIIIIIIIIi");
 			//	var imageURL = canvas.toDataURL("image/png");
 			//	var link = document.createElement("a");
 			//	link.href = imageURL;
@@ -230,82 +231,56 @@ const Yamb = () => {
 		}
 	}, [tabela]);
 
+	useEffect(() => {
+		colorPickerRef.current?.addEventListener("change", () => {
+			generateTailwindShades(colorPickerRef.current?.value);
+		});
+	}, []);
+
+	// const showColorPicker = () => {
+	// 	colorPickerRef.current?.click();
+	// };
+
 	return (
 		<div className="relative">
 			<StateContext.Provider value={{ state, setState }}>
-				<div className="absolute top-0 flex flex-col items-center justify-center w-screen pt-4 pb-4">
-					<div className="flex flex-row relative z-10">
-						<canvas ref={canvasRef} className="h-[1px] absolute translate-x-[-50%]" />
-						{/* <button ref={buttonRef} className="w-16 h-16 bg-amber-900">
+				<div className="absolute top-0 flex w-screen flex-col items-center justify-center pb-4 pt-4">
+					<div className="relative z-10 flex flex-row">
+						<canvas ref={canvasRef} className="absolute h-[1px] translate-x-[-50%]" />
+						{/* <button ref={buttonRef} className="h-16 w-16 bg-amber-900">
 					Shit
 				</button> */}
 					</div>
 					<div style={{ transform: `scale(${scale})`, transformOrigin: "top" }}>
 						<YambBoard tabela={tabela} updateTabela={updateTabela} />
-						<button
-							className="flex flex-row w-56 h-56 relative"
-							onClick={(e) => {
-								if (isPickingColorRef.current) return;
-								isPickingColorRef.current = true;
 
-								const button = e.currentTarget as HTMLButtonElement;
-								const rect = button.getBoundingClientRect();
-
-								const input = document.createElement("input");
-								input.type = "color";
-								input.value = "#eb6434";
-								// Position at the button location (viewport coordinates)
-								input.style.position = "fixed";
-								input.style.left = `${rect.left}px`;
-								input.style.top = `${rect.top}px`;
-								input.style.width = "1px";
-								input.style.height = "1px";
-								input.style.opacity = "0";
-								input.style.zIndex = "2147483647";
-
-								const cleanup = () => {
-									input.remove();
-									isPickingColorRef.current = false;
-								};
-
-								input.addEventListener(
-									"change",
-									() => {
-										generateTailwindShades(input.value);
-										cleanup();
-									},
-									{ once: true }
-								);
-								input.addEventListener("blur", cleanup, { once: true });
-
-								// Append outside the button to avoid bubbling to the button handler
-								document.body.appendChild(input);
-								// Defer trigger to avoid reentrancy with current click handler
-								setTimeout(() => {
-									const anyInput = input as any;
-									if (typeof anyInput.showPicker === "function") {
-										anyInput.showPicker();
-									} else {
-										input.click();
-									}
-								}, 0);
-							}}
-						></button>
-
-						<div className="flex flex-row items-center justify-center mt-6 gap-6">
-							<div className="mb-2 flex flex-col justify-around items-center gap-4">
-								<button className="w-[50px] h-[50px] bg-main-900 rounded-md border-2 border-main-600 p-1">
+						<div className="mt-6 flex flex-row items-center justify-center gap-6">
+							<div className="mb-2 flex flex-col items-center justify-around gap-4">
+								<button
+									className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+									// onClick={() => {
+									// 	showColorPicker();
+									// }}
+								>
 									<img src="assets/large-paint-brush.svg"></img>
 								</button>
+								<input
+									type="color"
+									defaultValue="#eb6434"
+									ref={colorPickerRef}
+									className="fixed h-12 w-12 opacity-0"
+								/>
 								{state.isMyMove && state.roundIndex > 0 && (
-									<button
-										className="w-[50px] h-[50px] bg-main-900 rounded-md border-2 border-main-600 p-1"
-										onClick={() =>
-											setState((prev) => ({ ...prev, blackout: true }))
-										}
-									>
-										<img src="assets/interdiction.svg"></img>
-									</button>
+									<>
+										<button
+											className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+											onClick={() =>
+												setState((prev) => ({ ...prev, blackout: true }))
+											}
+										>
+											<img src="assets/interdiction.svg"></img>
+										</button>
+									</>
 								)}
 							</div>
 							{state.isMyMove && <DicePicker />}
