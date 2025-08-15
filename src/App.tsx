@@ -72,7 +72,7 @@ export const TabelaContext = createContext<TabelaState>({
 const data = localStorage.getItem(gameIdFromUrl + "-data");
 var dataObj = data ? JSON.parse(data) : undefined;
 
-const Yamb = ({ gameId }: { gameId: string }) => {
+const Yamb = ({ gameId }: { gameId: string; hostId: string }) => {
 	const [state, setState] = useState<State>(
 		dataObj?.state ?? {
 			roundIndex: 0,
@@ -80,7 +80,7 @@ const Yamb = ({ gameId }: { gameId: string }) => {
 			isMyMove: false,
 		}
 	);
-	const { peerData, setPeerData, peerId, registerCallback } = useNetworking();
+	const { peerData, peerId, registerCallback, hostId } = useNetworking();
 
 	const [scale, setScale] = useState(1);
 	const { tabela, updateTabela } = useContext(TabelaContext);
@@ -95,7 +95,7 @@ const Yamb = ({ gameId }: { gameId: string }) => {
 
 	useEffect(() => {
 		if (peerData.length > 0) {
-			setState((prev) => ({ ...prev, isMyMove: peerData[0].id === peerId }));
+			if (hostId == peerId) setState((prev) => ({ ...prev, isMyMove: true }));
 		}
 	}, []);
 

@@ -46,6 +46,7 @@ export const NetworkingMenu = ({
 
 	const startHost = () => {
 		setIsHost(true);
+		setHostId(peerId);
 		appendLog("Started as host. Share your ID with others.");
 	};
 
