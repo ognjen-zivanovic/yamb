@@ -6,11 +6,14 @@ import { ReadonlyYambBoard } from "./ReadonlyBoard";
 import { defaultTabela } from "./BoardConstants";
 import { type Cell } from "./BoardConstants";
 import { TabelaContext } from "./App";
+import { nanoid } from "nanoid";
 
 export const NetworkingMenu = ({
 	setHasStarted,
+	setGameId,
 }: {
 	setHasStarted: (hasStarted: boolean) => void;
+	setGameId: (gameId: string) => void;
 }) => {
 	const {
 		hostId,
@@ -48,19 +51,21 @@ export const NetworkingMenu = ({
 
 	const joinHost = () => {
 		connectToPeer(hostId);
-		setHasJoinedHost(true);
+		// setHasJoinedHost(true);
 	};
 
 	const startGame = () => {
 		sharePeerData();
 		setHasStarted(true);
-		broadcastMessage("start-game", {});
+		let newGameId = nanoid(8);
+		setGameId(newGameId);
+		broadcastMessage("start-game", newGameId);
 	};
 
 	const onReceiveStartGame = (incoming: boolean, _conn: any, data: any) => {
 		if (!incoming) {
-			//console.log("start game", data);
 			setHasStarted(true);
+			setGameId(data.data as string);
 		}
 	};
 
@@ -243,35 +248,54 @@ const PreviousSaveBoard = () => {
 								};
 
 								for (let i = 0; i < pixels.length; i += 4) {
-									const r = pixels[i];
 									if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
 										//console.log("Found O G N J E N");
 										start = i;
 										startCnt++;
 									}
 								}
+								const w = startCnt * 4;
+								start += w + 4;
 								if (start != -1) {
-									let rows = pixels[start - startCnt * 4];
-									let cols = pixels[start - startCnt * 4 + 1];
+									let rows = pixels[start + 0];
+									let cols = pixels[start + 1];
 									let totalCells = rows * cols;
 
-									start += (startCnt + 1) * 4;
+									console.log("Decoded: ", rows, cols, totalCells);
+
+									start += w;
+
+									const RColor = pixels[start + 0];
+									const GColor = pixels[start + 1];
+									const BColor = pixels[start + 2];
+									const AColor = pixels[start + 3];
+									console.log("Color: ", RColor, GColor, BColor, AColor);
+
+									start += w;
+
 									for (let r = 0; r < rows; r++) {
 										for (let c = 0; c < cols; c++) {
 											const cellIndex = r * cols + c;
-											const pixelOffset = cellIndex * 4 * startCnt + start;
+											const pixelOffset = cellIndex * w + start;
 
-											let availableNum: number | undefined =
-												0xff - pixels[pixelOffset + 2];
-											let available: boolean | undefined = undefined;
-											let hasValue: boolean | undefined =
-												pixels[pixelOffset + 1] == 0xa2;
-											let val: number | undefined = pixels[pixelOffset];
+											let R = pixels[pixelOffset + 0];
+											let G = pixels[pixelOffset + 1];
+											let B = pixels[pixelOffset + 2];
+											let A = pixels[pixelOffset + 3];
+
+											R ^= RColor; // value (or 0 if undefined)
+											G ^= GColor; // hasValue (0 if has value, >=1 if undefined)
+											B ^= BColor; // available (0 if false, 1 if true, >=2 if undefined)
+											A ^= AColor; // should be always 255
+
+											let available: boolean | undefined =
+												B == 1 ? true : B == 0 ? false : undefined;
+											let hasValue: boolean | undefined = G == 0;
+
+											let val: number | undefined = R;
 											if (hasValue == false) val = undefined;
-											if (availableNum == 2) available = undefined;
-											if (availableNum == 1) available = true;
-											if (availableNum == 0) available = false;
 
+											console.log("Decoded: ", r, c, val, available);
 											if (val != undefined || available != undefined) {
 												updateTabela(r, c, {
 													value: val,

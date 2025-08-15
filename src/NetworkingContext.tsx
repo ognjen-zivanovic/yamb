@@ -38,12 +38,20 @@ export interface NetworkingContextValue {
 
 const NetworkingContext = createContext<NetworkingContextValue | undefined>(undefined);
 
+const urlParams = new URLSearchParams(window.location.search);
+export const gameIdFromUrl = urlParams.get("game");
+const data = localStorage.getItem(gameIdFromUrl + "-data");
+var dataObj = data ? JSON.parse(data) : undefined;
+console.log(dataObj);
+
+const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
+
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
-	const [peer, setPeer] = useState<Peer | null>(null);
+	var peer = savedPeerId ? new Peer(savedPeerId) : new Peer();
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
 	const [hostId, setHostId] = useState("");
-	const [peerId, setPeerId] = useState("");
-	const [peerData, setPeerData] = useState<PeerData[]>([]);
+	const [peerId, setPeerId] = useState(savedPeerId ?? "");
+	const [peerData, setPeerData] = useState<PeerData[]>(dataObj?.peerData ?? []);
 	const [name, setName] = useState("");
 
 	// function callbacks, map from string to a function
@@ -62,29 +70,36 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 			// remove it from url
 			window.history.replaceState({}, "", window.location.pathname);
 		}
+	}, []);
 
-		const p = new Peer();
-		setPeer(p);
-
-		p.on("open", (id) => {
+	useEffect(() => {
+		peer.on("open", (id) => {
 			setPeerId(id);
-			setPeerData([{ id, name: "", index: 0 }]);
+			if (peerData.length == 0) {
+				setPeerData([{ id, name: "", index: 0 }]);
+			}
 			appendLog(`Your Peer ID: ${id}`);
 		});
 
-		p.on("connection", (conn) => {
+		peer.on("connection", (conn) => {
 			appendLog(`Incoming connection from ${conn.peer}`);
 			setupConnection(conn, true); // Incoming = host side
 		});
+	}, []);
 
-		return () => {
-			p.destroy();
-		};
+	useEffect(() => {
+		for (let otherPeer of peerData) {
+			if (connections.has(otherPeer.id) || otherPeer.id == peerId) continue;
+			connectToPeer(otherPeer.id);
+		}
 	}, []);
 
 	const connectToPeer = (id: string) => {
+		console.log("PEER IS: ", peer);
 		if (!peer) return;
+		console.log("TRYING TO CONNECT TO: ", id);
 		const conn = peer.connect(id);
+		console.log("TRYING TO SETUP CONNECTION TO: ", id);
 		setupConnection(conn);
 	};
 
@@ -161,6 +176,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 				conn.send({ type: "name", name });
 				//console.log(`Sent name: ${name}`);
 			}
+			console.log("MAYBE");
 			setPeerData((prev) => [...prev, { id: conn.peer, name: "", index: prev.length }]);
 
 			conn.on("data", (data: any) => {

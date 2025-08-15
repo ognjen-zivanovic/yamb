@@ -17,47 +17,36 @@ const SetNewAvailable = (
 	rowIndex: number,
 	colIndex: number
 ) => {
+	let di = 0;
 	if (
 		colIndex == ColumnNames.OdGore ||
 		colIndex == ColumnNames.OdGoreIDole ||
 		colIndex == ColumnNames.OdSredine
 	) {
-		let nextIndex = rowIndex + 1;
-		if (nextIndex < 16) {
-			if (
-				nextIndex == RowNames.Suma1 ||
-				nextIndex == RowNames.Suma2 ||
-				nextIndex == RowNames.Suma3
-			) {
-				nextIndex++;
-			}
-			if (tabela[nextIndex][colIndex]?.value == undefined) {
-				updateTabela(nextIndex, colIndex, {
-					isAvailable: true,
-				});
-			}
-		}
+		di = 1;
 	}
+
 	if (
 		colIndex == ColumnNames.OdDole ||
 		colIndex == ColumnNames.OdGoreIDole ||
 		colIndex == ColumnNames.OdSredine
 	) {
-		let nextIndex = rowIndex - 1;
-		if (nextIndex >= 0) {
-			if (
-				nextIndex == RowNames.Suma1 ||
-				nextIndex == RowNames.Suma2 ||
-				nextIndex == RowNames.Suma3
-			) {
-				nextIndex--;
-			}
-			if (tabela[nextIndex][colIndex]?.value == undefined) {
-				updateTabela(nextIndex, colIndex, {
-					isAvailable: true,
-				});
-			}
-		}
+		di = -1;
+	}
+
+	if (di == 0) return;
+
+	let nextIndex = (rowIndex += di);
+	if (nextIndex == RowNames.Suma1 || nextIndex == RowNames.Suma2 || nextIndex == RowNames.Suma3) {
+		nextIndex += di;
+	}
+	while (nextIndex >= 0 && nextIndex < 16 && tabela[nextIndex][colIndex]?.value != undefined) {
+		nextIndex += di;
+	}
+	if (nextIndex >= 0 && nextIndex < 16) {
+		updateTabela(nextIndex, colIndex, {
+			isAvailable: true,
+		});
 	}
 };
 
@@ -90,14 +79,14 @@ const Row = ({
 	rowIndex,
 	tabela,
 	updateTabela,
-	sendMessageToNextPlayer,
 	broadcastMessage,
+	sendMessageToNextPlayer,
 }: {
 	rowIndex: RowName;
 	tabela: Cell[][];
 	updateTabela: (row: number, col: number, cell: Cell) => void;
-	sendMessageToNextPlayer: (message: string, data: any) => void;
 	broadcastMessage: (type: string, data: any) => void;
+	sendMessageToNextPlayer: (message: string, data: any) => void;
 }) => {
 	const { state, setState } = useContext(StateContext);
 
@@ -156,25 +145,17 @@ const Row = ({
 								: ""
 						}`}
 						onClick={() => {
-							if (
-								rowIndex == RowNames.Suma1 ||
-								rowIndex == RowNames.Suma2 ||
-								rowIndex == RowNames.Suma3
-							) {
-								return;
-							}
-							if (!state.blackout && !isActive) {
-								return;
-							}
-							let newValue = state.value[rowIndex] == -1 ? 0 : state.value[rowIndex];
-							updateTabela(rowIndex, colIndex, {
-								value: newValue,
-								isAvailable: false,
+							chooseCell({
+								rowIndex,
+								colIndex,
+								state,
+								isActive,
+								tabela,
+								updateTabela,
+								setState,
+								broadcastMessage,
+								sendMessageToNextPlayer,
 							});
-							SetNewAvailable(tabela, updateTabela, rowIndex, colIndex);
-							setState({ value: [], roundIndex: 0, isMyMove: true });
-							sendMessageToNextPlayer("next-player", {});
-							broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 						}}
 					>
 						{tabela[rowIndex][colIndex]?.value != undefined
@@ -207,7 +188,7 @@ export const YambBoard = ({
 	tabela: Cell[][];
 	updateTabela: (row: number, col: number, cell: Cell) => void;
 }) => {
-	const { sendMessageToNextPlayer, broadcastMessage } = useNetworking();
+	const { broadcastMessage, sendMessageToNextPlayer } = useNetworking();
 
 	useEffect(() => {
 		const calculateSumOfFirstSum = (colIndex: number) => {
@@ -295,13 +276,55 @@ export const YambBoard = ({
 						rowIndex={rowIndex as RowName}
 						tabela={tabela}
 						updateTabela={updateTabela}
-						sendMessageToNextPlayer={sendMessageToNextPlayer}
 						broadcastMessage={broadcastMessage}
+						sendMessageToNextPlayer={sendMessageToNextPlayer}
 					/>
 				))}
 			</div>
 		</>
 	);
+};
+
+// function chooseCell(rowIndex: number, state: State, isActive: boolean | undefined, updateTabela: (row: number, col: number, cell: Cell) => void, colIndex: number, tabela: Cell[][], setState: Dispatch<SetStateAction<State>>, sendMessageToNextPlayer: (message: string, data: any) => void, broadcastMessage: (type: string, data: any) => void) {
+export const chooseCell = ({
+	rowIndex,
+	colIndex,
+	state,
+	isActive,
+	tabela,
+	updateTabela,
+	setState,
+	broadcastMessage,
+	sendMessageToNextPlayer,
+}: {
+	rowIndex: number;
+	colIndex: number;
+	state: State;
+	isActive: boolean | undefined;
+	tabela: Cell[][];
+	updateTabela: (row: number, col: number, cell: Cell) => void;
+	setState: Dispatch<SetStateAction<State>>;
+	broadcastMessage: (type: string, data: any) => void;
+	sendMessageToNextPlayer: (message: string, data: any) => void;
+}) => {
+	if (rowIndex == RowNames.Suma1 || rowIndex == RowNames.Suma2 || rowIndex == RowNames.Suma3) {
+		return;
+	}
+	if (!state.blackout && !isActive) {
+		return;
+	}
+	let newValue = state.value[rowIndex] == -1 ? 0 : state.value[rowIndex];
+	if (state.blackout && !isActive) newValue = 0;
+	updateTabela(rowIndex, colIndex, {
+		value: newValue,
+		isAvailable: false,
+	});
+	if (!state.blackout) {
+		SetNewAvailable(tabela, updateTabela, rowIndex, colIndex);
+	}
+	setState({ value: [], roundIndex: 0, isMyMove: false });
+	sendMessageToNextPlayer("next-player", {});
+	broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 };
 
 export function isCellActive(tabela: Cell[][], rowIndex: number, colIndex: number, state: State) {

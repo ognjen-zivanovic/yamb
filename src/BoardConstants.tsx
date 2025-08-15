@@ -67,7 +67,37 @@ export const ReverseColumnNames = {
 	7: "OdGoreIDole",
 };
 
+export const RowNameFromString = {
+	Jedinice: RowNames.Jedinice,
+	Dvojke: RowNames.Dvojke,
+	Trojke: RowNames.Trojke,
+	Cetvorke: RowNames.Cetvorke,
+	Petice: RowNames.Petice,
+	Sestice: RowNames.Sestice,
+	Suma1: RowNames.Suma1,
+	Maksimum: RowNames.Maksimum,
+	Minimum: RowNames.Minimum,
+	Suma2: RowNames.Suma2,
+	Kenta: RowNames.Kenta,
+	Triling: RowNames.Triling,
+	Ful: RowNames.Ful,
+	Kare: RowNames.Kare,
+	Yamb: RowNames.Yamb,
+};
+
+export const ColumnNameFromString = {
+	OdGore: ColumnNames.OdGore,
+	OdDole: ColumnNames.OdDole,
+	Slobodna: ColumnNames.Slobodna,
+	Najava: ColumnNames.Najava,
+	Rucna: ColumnNames.Rucna,
+	Dirigovana: ColumnNames.Dirigovana,
+	OdSredine: ColumnNames.OdSredine,
+	OdGoreIDole: ColumnNames.OdGoreIDole,
+};
+
 export type RowName = (typeof RowNames)[keyof typeof RowNames];
+export type ColumnName = (typeof ColumnNames)[keyof typeof ColumnNames];
 
 export const headerIcons = [
 	<DownSvg />,

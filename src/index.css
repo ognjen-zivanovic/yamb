@@ -8,6 +8,12 @@
 		overscroll-behavior: none;
 	}
 
+	@media (max-width: 600px) {
+		body {
+			overflow-y: hidden; /* Disables vertical scrolling */
+		}
+	}
+
 	html {
 		width: 100% !important;
 		height: 100% !important;
