@@ -53,6 +53,7 @@ function generateTailwindShades(baseColor: string) {
 
 export interface TabelaState {
 	tabela: Cell[][];
+	setTabela: Dispatch<SetStateAction<Cell[][]>>;
 	updateTabela: (row: number, col: number, cell: Cell) => void;
 }
 
@@ -66,13 +67,14 @@ export const StateContext = createContext<{
 
 export const TabelaContext = createContext<TabelaState>({
 	tabela: [] as Cell[][],
+	setTabela: () => {},
 	updateTabela: () => {},
 });
 
 const data = localStorage.getItem(gameIdFromUrl + "-data");
 var dataObj = data ? JSON.parse(data) : undefined;
 
-const Yamb = ({ gameId }: { gameId: string; hostId: string }) => {
+const Yamb = ({ gameId }: { gameId: string }) => {
 	const [state, setState] = useState<State>(
 		dataObj?.state ?? {
 			roundIndex: 0,
@@ -91,7 +93,7 @@ const Yamb = ({ gameId }: { gameId: string; hostId: string }) => {
 	const colorPickerRef = useRef<HTMLInputElement>(null);
 	const [textRef, setTextRef] = useState<HTMLDivElement | null>(null);
 
-	const [themeColor, setThemeColor] = useState("#50a2ff"); // save maybe
+	const [themeColor, setThemeColor] = useState(dataObj?.color ?? "#50a2ff"); // save maybe
 
 	useEffect(() => {
 		if (peerData.length > 0) {
@@ -99,7 +101,7 @@ const Yamb = ({ gameId }: { gameId: string; hostId: string }) => {
 		}
 	}, []);
 
-	const saveToLocalStorage = () => {
+	useEffect(() => {
 		let data: any = {};
 
 		data.peerData = peerData;
@@ -107,14 +109,12 @@ const Yamb = ({ gameId }: { gameId: string; hostId: string }) => {
 		data.tabela = tabela;
 		data.peerId = peerId;
 		data.state = state;
+		data.color = themeColor;
+		data.date = new Date().getTime();
 
 		localStorage.setItem(gameId + "-data", JSON.stringify(data));
-		localStorage.setItem(gameId + "-peerId", peerId);
-	};
-
-	useEffect(() => {
-		saveToLocalStorage();
-	}, [state, tabela, peerData]);
+		localStorage.setItem(gameId + "-peerId", peerId); // should this be moved to NetworkingContext?
+	}, [state, tabela, peerData, themeColor]);
 
 	const onRecievePreviousPlayersMove = (_incoming: boolean, _conn: any, _data: any) => {
 		setState((prev) => ({ ...prev, isMyMove: true }));
@@ -142,7 +142,7 @@ const Yamb = ({ gameId }: { gameId: string; hostId: string }) => {
 			let newScale = width >= 600 ? 1.0 : (0.9 * width) / 600;
 			setScale(newScale);
 
-			setThemeColor(getRandomColor());
+			//setThemeColor(getRandomColor());
 		};
 
 		updateScale();
@@ -401,7 +401,7 @@ const App = () => {
 
 	return (
 		<div>
-			<TabelaContext.Provider value={{ tabela, updateTabela }}>
+			<TabelaContext.Provider value={{ tabela, setTabela, updateTabela }}>
 				<NetworkingProvider>
 					{!hasStarted ? (
 						<NetworkingMenu setHasStarted={setHasStarted} setGameId={setGameId} />

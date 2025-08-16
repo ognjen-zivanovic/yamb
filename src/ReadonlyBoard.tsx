@@ -10,8 +10,8 @@ import {
 
 const ReadonlyHeaderRow = () => {
 	return (
-		<div className="flex flex-row h-[calc(6*100%/118)]">
-			<div className="bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center text-[1.55rem] flex items-center justify-center">
+		<div className="flex h-[calc(6*100%/118)] flex-row">
+			<div className="border-1 flex h-full w-[calc(12*100%/106)] items-center justify-center border-main-500 bg-white text-center text-[1.55rem]">
 				IGRA
 			</div>
 			{Array.from({ length: 10 }).map((_, index) => (
@@ -26,7 +26,7 @@ const ReadonlyHeaderRow = () => {
 					{headerIcons[index % headerIcons.length]}
 				</div>
 			))}
-			<div className="bg-white border-main-500 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center flex items-center justify-center">
+			<div className="border-1 flex h-full w-[calc(14*100%/106)] items-center justify-center border-main-500 bg-white text-center text-[1.6rem]">
 				YAMB
 			</div>
 		</div>
@@ -35,7 +35,7 @@ const ReadonlyHeaderRow = () => {
 
 const ReadonlyRow = ({ rowIndex, tabela }: { rowIndex: RowName; tabela: Cell[][] }) => {
 	return (
-		<div className="flex flex-row h-[calc(7*100%/118)]">
+		<div className="flex h-[calc(7*100%/118)] flex-row">
 			<div
 				className={`bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center align-middle flex items-center justify-center
 				
@@ -103,7 +103,7 @@ export const ReadonlyYambBoard = ({ tabela }: { tabela: Cell[][] }) => {
 	return (
 		<>
 			<div
-				className="flex flex-col border-main-500 border-4 border-solid rounded-md overflow-clip w-[600px] aspect-[106/118] min-h-0"
+				className="flex aspect-[106/118] min-h-0 w-[600px] flex-col justify-self-center overflow-clip rounded-md border-4 border-solid border-main-500"
 				style={{ transform: `scale(${scale * 0.9})`, transformOrigin: "top" }}
 			>
 				<ReadonlyHeaderRow />

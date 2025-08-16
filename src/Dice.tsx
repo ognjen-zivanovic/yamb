@@ -174,7 +174,7 @@ export const DicePicker = ({
 	return (
 		state.isMyMove && (
 			<div className="flex flex-row items-center justify-center gap-6">
-				<div className="f-full rounded-md border-2 border-main-600">
+				<div className="f-full rounded-md border-4 border-main-600">
 					<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-500 p-4">
 						{chosenDice.map((num, index) => (
 							<img

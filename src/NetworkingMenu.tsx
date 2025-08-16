@@ -8,6 +8,20 @@ import { type Cell } from "./BoardConstants";
 import { TabelaContext } from "./App";
 import { nanoid } from "nanoid";
 
+// stolen from chatgpt
+function formatDate(date: Date) {
+	const pad = (n: number) => n.toString().padStart(2, "0");
+
+	const day = pad(date.getDate());
+	const month = pad(date.getMonth() + 1); // Months are 0-indexed
+	const year = date.getFullYear();
+
+	const hours = pad(date.getHours());
+	const minutes = pad(date.getMinutes());
+
+	return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 export const NetworkingMenu = ({
 	setHasStarted,
 	setGameId,
@@ -35,6 +49,9 @@ export const NetworkingMenu = ({
 	const [hasJoinedHost, setHasJoinedHost] = useState(false);
 	const [isHost, setIsHost] = useState<boolean>(false);
 
+	const [isSaveLoaded, setIsSaveLoaded] = useState(false);
+	const { tabela, setTabela, updateTabela } = useContext(TabelaContext);
+
 	//const appendLog = (msg: string) => setLog((l) => [...l, msg]);
 	const appendLog = (msg: string) => console.log(msg);
 
@@ -52,7 +69,7 @@ export const NetworkingMenu = ({
 
 	const joinHost = () => {
 		connectToPeer(hostId);
-		// setHasJoinedHost(true);
+		setHasJoinedHost(true);
 	};
 
 	const startGame = () => {
@@ -76,6 +93,9 @@ export const NetworkingMenu = ({
 		<div className="flex min-h-screen justify-center bg-gray-50">
 			<div className="mx-auto w-full max-w-2xl p-3 sm:p-6">
 				<div className="rounded-lg bg-white p-4 shadow-lg sm:p-8">
+					<p className="mb-2 text-base text-gray-400 sm:text-lg">
+						<strong>Your ID:</strong> {peerId}
+					</p>
 					{!hasJoinedHost && (
 						<>
 							<div>
@@ -131,58 +151,24 @@ export const NetworkingMenu = ({
 								)}
 							</div>
 							<hr className="my-2" />
-							{/* <div className="flex flex-row gap-2">
-						<input
-							placeholder="Type message"
-							value={input}
-							onChange={(e) => setInput(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									broadcastMessage(input);
-									setInput("");
-								}
-							}}
-							className="flex-1 rounded-md border-2 border-gray-300 px-2 py-1"
-						/>
-						<button
-							onClick={() => {
-								broadcastMessage(input);
-								setInput("");
-							}}
-							className="rounded-md bg-main-600 px-4 py-1 text-white hover:bg-main-600"
-						>
-							Send
-						</button>
-					</div> */}
-							{/* make this collapsable */}
-							{/* <details className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
-						<summary className="mb-3 cursor-pointer text-base font-bold sm:mb-4 sm:text-lg">
-							Log
-						</summary>
-						<div>
-							<ul className="max-h-60 space-y-2 overflow-y-auto text-sm">
-								{log.map((line, i) => (
-									<li
-										key={i}
-										className="break-words border-b border-gray-200 pb-2"
-									>
-										{line}
-									</li>
-								))}
-							</ul>
-						</div>
-					</details> */}
-							{/* 16:07 - 56 */}
-							{/* 16:25 - 78 */}
 							{isHost && (
 								<PeerDataPanel peerData={peerData} setPeerData={setPeerData} />
 							)}
-							<p className="text-base text-gray-400 sm:text-lg">
-								<strong>Your ID:</strong> {peerId}
-							</p>
 						</>
 					)}
-					{(hasJoinedHost || isHost) && <PreviousSaveBoard />}
+					{!isSaveLoaded && (
+						<div className="justify-self-center">
+							{(hasJoinedHost || isHost) && (
+								<PreviousGameFromSave
+									setTabela={setTabela}
+									updateTabela={updateTabela}
+									setIsSaveLoaded={setIsSaveLoaded}
+								/>
+							)}
+						</div>
+					)}
+
+					{isSaveLoaded && <ReadonlyYambBoard tabela={tabela} />}
 				</div>
 			</div>
 			{/* <Main /> */}
@@ -190,137 +176,237 @@ export const NetworkingMenu = ({
 	);
 };
 
-const PreviousSaveBoard = () => {
-	const { tabela, updateTabela } = useContext(TabelaContext);
-	const [isSaveLoaded, setIsSaveLoaded] = useState(false);
+const PreviousGameFromSave = ({
+	setTabela,
+	updateTabela,
+	setIsSaveLoaded,
+}: {
+	setTabela: Dispatch<SetStateAction<Cell[][]>>;
+	updateTabela: (rowIndex: number, colIndex: number, value: Cell) => void;
+	setIsSaveLoaded: (isSaveLoaded: boolean) => void;
+}) => {
+	const [prevSavedGames, setPrevSavedGames] = useState<SavedGame[]>([]);
 
-	return (
-		<div className="flex flex-col items-center justify-center justify-self-center">
-			<button
-				onClick={() => {
-					// load file
-					const input = document.createElement("input");
-					input.type = "file";
-					input.accept = "image/*";
+	interface SavedGame {
+		id: string;
+		names: string;
+		date: number;
+		color: string;
+	}
 
-					input.onchange = () => {
-						const file = input.files?.[0];
-						if (!file) return;
+	const loadAvailableSavedGames = () => {
+		// go throug each item saved in local storage, if there are items that start with the same 8 letters and end with -data and -peerId and -dice id then load them
 
-						const reader = new FileReader();
+		// for each key if it doesnt end with -data or -peerId or -dice then remove it
+		// chop off the -data -peerId -dice and count if the number of occurences is 3
 
-						reader.onload = (e) => {
-							const dataUrl = e.target?.result as string;
-							const img = new Image();
+		setPrevSavedGames([]);
+		for (let i = 0; i < localStorage.length; i++) {
+			const key = localStorage.key(i);
+			if (key == null) continue;
+			if (!key.endsWith("-data")) continue;
 
-							img.onload = () => {
-								//const canvas = canvasRef.current!;
-								// create a temp invisible canvas
-								const canvas = document.createElement("canvas");
-								canvas.width = img.width;
-								canvas.height = img.height;
+			const data = JSON.parse(localStorage.getItem(key)!);
+			const peerDataObj = data.peerData;
+			const colorObj = data.color;
+			const dateObj = data.date;
 
-								const ctx = canvas.getContext("2d");
-								if (!ctx) {
-									console.error("Unable to get 2D context");
-									return;
-								}
+			const id = key.replace("-data", "");
+			const names = peerDataObj.map((d) => d.name).join(", ");
+			const color = colorObj ?? "#50a2ff";
+			const date = dateObj ?? "";
 
-								ctx.drawImage(img, 0, 0);
-								const imageData = ctx.getImageData(0, 0, img.width, img.height);
-								const pixels = imageData.data; // Uint8ClampedArray [r, g, b, a, r, g, b, a, ...]
+			setPrevSavedGames((prev) => {
+				return [...prev, { id: key.replace("-data", ""), names, date, color }];
+			});
+		}
+		setPrevSavedGames((prev) => {
+			let copy = [...prev];
+			copy.sort((a, b) => b.date - a.date);
+			return copy;
+		});
+		// setIsSaveLoaded(true);
+	};
 
-								// console.log("Pixel data:", pixels);
-								// console.log(`Image dimensions: ${img.width}x${img.height}`);
+	const removeGameFromLocalStorage = (game: SavedGame) => {
+		setPrevSavedGames((prev) => {
+			const copy = [...prev];
+			copy.splice(copy.indexOf(game), 1);
+			return copy;
+		});
+		localStorage.removeItem(game.id + "-data");
+		localStorage.removeItem(game.id + "-peerId");
+		localStorage.removeItem(game.id + "-dice");
+	};
 
-								let start = -1;
-								let startCnt = 0;
+	const loadGameFromLocalStorage = (game: SavedGame) => {
+		const dataObj = JSON.parse(localStorage.getItem(game.id + "-data")!).tabela;
+		setTabela(dataObj);
+		setIsSaveLoaded(true);
+	};
 
-								const isPixelString = (i: number, s: string) => {
-									if (s.length != 3 || i < 0 || i >= pixels.length) return false;
-									const r = pixels[i];
-									const g = pixels[i + 1];
-									const b = pixels[i + 2];
-									return (
-										r == s.charCodeAt(0) &&
-										g == s.charCodeAt(1) &&
-										b == s.charCodeAt(2)
-									);
-								};
+	const loadGameFromImage = () => {
+		// load file
+		const input = document.createElement("input");
+		input.type = "file";
+		input.accept = "image/*";
 
-								for (let i = 0; i < pixels.length; i += 4) {
-									if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
-										//console.log("Found O G N J E N");
-										start = i;
-										startCnt++;
-									}
-								}
-								const w = startCnt * 4;
-								start += w + 4;
-								if (start != -1) {
-									let rows = pixels[start + 0];
-									let cols = pixels[start + 1];
-									let totalCells = rows * cols;
+		input.onchange = () => {
+			const file = input.files?.[0];
+			if (!file) return;
 
-									console.log("Decoded: ", rows, cols, totalCells);
+			const reader = new FileReader();
 
-									start += w;
+			reader.onload = (e) => {
+				const dataUrl = e.target?.result as string;
+				const img = new Image();
 
-									const RColor = pixels[start + 0];
-									const GColor = pixels[start + 1];
-									const BColor = pixels[start + 2];
-									const AColor = pixels[start + 3];
-									console.log("Color: ", RColor, GColor, BColor, AColor);
+				img.onload = () => {
+					//const canvas = canvasRef.current!;
+					// create a temp invisible canvas
+					const canvas = document.createElement("canvas");
+					canvas.width = img.width;
+					canvas.height = img.height;
 
-									start += w;
+					const ctx = canvas.getContext("2d");
+					if (!ctx) {
+						console.error("Unable to get 2D context");
+						return;
+					}
 
-									for (let r = 0; r < rows; r++) {
-										for (let c = 0; c < cols; c++) {
-											const cellIndex = r * cols + c;
-											const pixelOffset = cellIndex * w + start;
+					ctx.drawImage(img, 0, 0);
+					const imageData = ctx.getImageData(0, 0, img.width, img.height);
+					const pixels = imageData.data; // Uint8ClampedArray [r, g, b, a, r, g, b, a, ...]
 
-											let R = pixels[pixelOffset + 0];
-											let G = pixels[pixelOffset + 1];
-											let B = pixels[pixelOffset + 2];
-											let A = pixels[pixelOffset + 3];
+					// console.log("Pixel data:", pixels);
+					// console.log(`Image dimensions: ${img.width}x${img.height}`);
 
-											R ^= RColor; // value (or 0 if undefined)
-											G ^= GColor; // hasValue (0 if has value, >=1 if undefined)
-											B ^= BColor; // available (0 if false, 1 if true, >=2 if undefined)
-											A ^= AColor; // should be always 255
+					let start = -1;
+					let startCnt = 0;
 
-											let available: boolean | undefined =
-												B == 1 ? true : B == 0 ? false : undefined;
-											let hasValue: boolean | undefined = G == 0;
-
-											let val: number | undefined = R;
-											if (hasValue == false) val = undefined;
-
-											console.log("Decoded: ", r, c, val, available);
-											if (val != undefined || available != undefined) {
-												updateTabela(r, c, {
-													value: val,
-													isAvailable: available,
-												});
-											}
-										}
-									}
-								}
-								setIsSaveLoaded(true);
-							};
-
-							img.src = dataUrl;
-						};
-
-						reader.readAsDataURL(file);
+					const isPixelString = (i: number, s: string) => {
+						if (s.length != 3 || i < 0 || i >= pixels.length) return false;
+						const r = pixels[i];
+						const g = pixels[i + 1];
+						const b = pixels[i + 2];
+						return r == s.charCodeAt(0) && g == s.charCodeAt(1) && b == s.charCodeAt(2);
 					};
 
-					input.click();
-				}}
-			>
-				Load image save
-			</button>
-			{isSaveLoaded && <ReadonlyYambBoard tabela={tabela} />}
+					for (let i = 0; i < pixels.length; i += 4) {
+						if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
+							//console.log("Found O G N J E N");
+							start = i;
+							startCnt++;
+						}
+					}
+					const w = startCnt * 4;
+					start += w + 4;
+					if (start != -1) {
+						let rows = pixels[start + 0];
+						let cols = pixels[start + 1];
+						let totalCells = rows * cols;
+
+						console.log("Decoded: ", rows, cols, totalCells);
+
+						start += w;
+
+						const RColor = pixels[start + 0];
+						const GColor = pixels[start + 1];
+						const BColor = pixels[start + 2];
+						const AColor = pixels[start + 3];
+						console.log("Color: ", RColor, GColor, BColor, AColor);
+
+						start += w;
+
+						for (let r = 0; r < rows; r++) {
+							for (let c = 0; c < cols; c++) {
+								const cellIndex = r * cols + c;
+								const pixelOffset = cellIndex * w + start;
+
+								let R = pixels[pixelOffset + 0];
+								let G = pixels[pixelOffset + 1];
+								let B = pixels[pixelOffset + 2];
+								let A = pixels[pixelOffset + 3];
+
+								R ^= RColor; // value (or 0 if undefined)
+								G ^= GColor; // hasValue (0 if has value, >=1 if undefined)
+								B ^= BColor; // available (0 if false, 1 if true, >=2 if undefined)
+								A ^= AColor; // should be always 255
+
+								let available: boolean | undefined =
+									B == 1 ? true : B == 0 ? false : undefined;
+								let hasValue: boolean | undefined = G == 0;
+
+								let val: number | undefined = R;
+								if (hasValue == false) val = undefined;
+
+								console.log("Decoded: ", r, c, val, available);
+								if (val != undefined || available != undefined) {
+									updateTabela(r, c, {
+										value: val,
+										isAvailable: available,
+									});
+								}
+							}
+						}
+					}
+					setIsSaveLoaded(true);
+				};
+
+				img.src = dataUrl;
+			};
+
+			reader.readAsDataURL(file);
+		};
+
+		input.click();
+	};
+
+	return (
+		<div className="flex flex-1 flex-col items-center justify-center gap-2">
+			<div className="flex flex-row items-center justify-center gap-2">
+				<button
+					className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+					onClick={() => loadAvailableSavedGames()}
+				>
+					<img src="assets/database.svg"></img>
+				</button>
+				<button
+					className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+					onClick={() => loadGameFromImage()}
+				>
+					<img src="assets/smartphone.svg"></img>
+				</button>
+			</div>
+			<div className="justify-baseline flex flex-col items-baseline gap-2">
+				{prevSavedGames.map((game) => (
+					<div className="flex flex-row gap-2 overflow-auto">
+						<button
+							key={game.id + "-delete"}
+							className="h-[40px] w-[40px] rounded-md border-2 border-red-600 bg-red-900 p-1"
+							onClick={() => {
+								removeGameFromLocalStorage(game);
+							}}
+						>
+							<img src="assets/trash-can.svg"></img>
+						</button>
+						<button
+							key={game.id}
+							onClick={() => {
+								loadGameFromLocalStorage(game);
+							}}
+							className="flex-1 whitespace-normal rounded-md border-2 bg-gray-200 p-1 text-left"
+							style={{ borderColor: game.color, wordBreak: "break-word" }}
+						>
+							<span className="text-black">
+								{formatDate(new Date(game.date))} ({game.names})
+							</span>
+
+							<span className="text-gray-500"> {game.id}</span>
+						</button>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 };
@@ -355,7 +441,12 @@ const PeerDataPanel = ({
 
 	const handleDrop = (e: React.DragEvent, dropIndex: number) => {
 		e.preventDefault();
-		if (draggedIndex === null || draggedIndex === dropIndex) {
+		if (
+			draggedIndex === null ||
+			draggedIndex === dropIndex ||
+			draggedIndex === 0 ||
+			dropIndex === 0
+		) {
 			setDraggedIndex(null);
 			setDragOverIndex(null);
 			return;
@@ -380,7 +471,7 @@ const PeerDataPanel = ({
 		setDragOverIndex(null);
 	};
 	return (
-		<div className="mt-4 rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:mt-6 sm:p-6">
+		<div className="mb-4 mt-4 rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:mt-6 sm:p-6">
 			<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Peer Data</h3>
 			<ul className="space-y-3">
 				{peerData.map((p, index) => (
@@ -401,8 +492,10 @@ const PeerDataPanel = ({
 						}`}
 					>
 						<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-							<span className="font-medium">{p.name || "Unnamed"}</span>
-							<span className="text-xs text-gray-500">({p.id})</span>
+							<span className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
+								{p.name || "Unnamed"}
+							</span>
+							<span className="text-nowrap text-xs text-gray-500">({p.id})</span>
 						</div>
 					</li>
 				))}
@@ -435,7 +528,6 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 	return (
 		inviteLink && (
 			<div className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
-				<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Invite Link:</h3>
 				<div className="mb-4 flex flex-col gap-3 sm:flex-row">
 					<input
 						value={inviteLink}
@@ -452,15 +544,11 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 
 				{qrCodeUrl && (
 					<div className="flex flex-col items-center">
-						<h4 className="mb-3 font-semibold">QR Code:</h4>
 						<img
 							src={qrCodeUrl}
 							alt="QR Code"
 							className="max-w-full rounded-md border border-gray-300"
 						/>
-						<p className="mt-2 text-center text-xs text-gray-600">
-							Scan to join automatically
-						</p>
 					</div>
 				)}
 			</div>

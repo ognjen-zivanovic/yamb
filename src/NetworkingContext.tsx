@@ -45,13 +45,18 @@ var dataObj = data ? JSON.parse(data) : undefined;
 
 const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
 
+// find index of me
+let index = dataObj?.peerData.findIndex((p) => p.id === savedPeerId);
+let savedName = dataObj?.peerData[index].name;
+console.log("MY NAME IS: ", savedName);
+
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
 	const [peer, setPeer] = useState<Peer | null>(savedPeerId ? new Peer(savedPeerId) : new Peer());
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
 	const [hostId, setHostId] = useState("");
 	const [peerId, setPeerId] = useState(savedPeerId ?? "");
 	const [peerData, setPeerData] = useState<PeerData[]>(dataObj?.peerData ?? []);
-	const [name, setName] = useState("");
+	const [name, setName] = useState(savedName ?? "");
 
 	// function callbacks, map from string to a function
 	// Use a ref so event handlers always see the latest callbacks without stale closures
@@ -116,8 +121,9 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	const onReceivePeerData = (incoming: boolean, _conn: any, data: any) => {
 		if (!incoming) {
-			//console.log(`Received peer data: ${data.peerData}`);
-			const peers = Array.from(data.peerData.keys?.() ?? []) as string[];
+			console.log(`Received peer data: ${data.peerData}`);
+			const peers = data.peerData.map((p: any) => p.id);
+			console.log("Peers: ", peers);
 			if (peers.length) connectToPeers(peers);
 			setPeerData(data.peerData);
 		}
@@ -168,7 +174,6 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 	}, []);
 
 	const setupConnection = (conn: any, incoming = false) => {
-		console.log("SETTING UP CONNECTION", conn);
 		conn.on("open", () => {
 			//console.log(`Connected to ${conn.peer}`);
 			setConnections((prev) => new Map(prev.set(conn.peer, conn)));
@@ -214,6 +219,13 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		// find the index of me
 		const me = peerData.findIndex((p) => p.id === peerId);
 		const nextPlayer = peerData[(me + 1) % peerData.length];
+
+		console.log(
+			"Sending message to next player, my index is: ",
+			me,
+			" next player hash is ",
+			nextPlayer?.id
+		);
 		if (nextPlayer) {
 			const conn = connections.get(nextPlayer.id);
 			if (conn) {
