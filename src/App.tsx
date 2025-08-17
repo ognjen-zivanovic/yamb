@@ -12,6 +12,7 @@ const gameIdFromUrl = urlParams.get("game");
 const data = localStorage.getItem(gameIdFromUrl + "-data");
 let dataObj = data ? JSON.parse(data) : undefined;
 
+// 🦍
 const App = () => {
 	const [hasStarted, setHasStarted] = useState(gameIdFromUrl ? true : false);
 	const [tabela, setTabela] = useState<Cell[][]>(dataObj?.tabela ?? createDefaultBoard());
