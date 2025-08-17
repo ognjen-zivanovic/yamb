@@ -1,11 +1,11 @@
-import { use, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import {
 	ColumnNames,
 	RowNames,
 	headerIcons,
 	rowIcons,
-	type RowName,
 	type Cell,
+	type RowName,
 } from "./BoardConstants";
 
 const ReadonlyHeaderRow = () => {

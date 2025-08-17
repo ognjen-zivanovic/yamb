@@ -1,15 +1,15 @@
-import { useEffect, useState, useContext, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { useContext, useEffect } from "react";
+import { StateContext, type GameState } from "./App";
 import {
 	ColumnNames,
 	RowNames,
 	headerIcons,
 	rowIcons,
-	type RowName,
 	type Cell,
+	type RowName,
 } from "./BoardConstants";
-import { StateContext, type State } from "./App";
-import { useNetworking } from "./NetworkingContext";
+import { useNetworking, type PeerData } from "./NetworkingContext";
 
 const SetNewAvailable = (
 	tabela: Cell[][],
@@ -296,16 +296,18 @@ export const chooseCell = ({
 	setState,
 	broadcastMessage,
 	sendMessageToNextPlayer,
+	peerData,
 }: {
 	rowIndex: number;
 	colIndex: number;
-	state: State;
+	state: GameState;
 	isActive: boolean | undefined;
 	tabela: Cell[][];
 	updateTabela: (row: number, col: number, cell: Cell) => void;
-	setState: Dispatch<SetStateAction<State>>;
+	setState: Dispatch<SetStateAction<GameState>>;
 	broadcastMessage: (type: string, data: any) => void;
 	sendMessageToNextPlayer: (message: string, data: any) => void;
+	peerData: PeerData[];
 }) => {
 	if (rowIndex == RowNames.Suma1 || rowIndex == RowNames.Suma2 || rowIndex == RowNames.Suma3) {
 		return;
@@ -327,7 +329,12 @@ export const chooseCell = ({
 	broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 };
 
-export function isCellActive(tabela: Cell[][], rowIndex: number, colIndex: number, state: State) {
+export function isCellActive(
+	tabela: Cell[][],
+	rowIndex: number,
+	colIndex: number,
+	state: GameState
+) {
 	let isActive = tabela[rowIndex][colIndex]?.isAvailable && state.value[rowIndex] > 0;
 	if (colIndex == ColumnNames.Najava && state.najava != rowIndex) isActive = false;
 	if (colIndex == ColumnNames.Dirigovana && state.dirigovana != rowIndex) isActive = false;

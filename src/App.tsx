@@ -1,25 +1,24 @@
+import chroma from "chroma-js";
 import {
-	useEffect,
-	useState,
 	createContext,
-	type SetStateAction,
-	type Dispatch,
-	useRef,
 	useContext,
+	useEffect,
+	useRef,
+	useState,
+	type Dispatch,
+	type SetStateAction,
 } from "react";
-import { NetworkingMenu } from "./NetworkingMenu";
 import { YambBoard } from "./Board";
 import type { RowName } from "./BoardConstants";
+import { defaultTabela, type Cell } from "./BoardConstants";
 import { DicePicker } from "./Dice";
-import { NetworkingProvider, useNetworking } from "./NetworkingContext";
-import { ColumnNames, RowNames, type Cell } from "./BoardConstants";
-import { defaultTabela } from "./BoardConstants";
-import chroma from "chroma-js";
+import { useNetworking, type PeerData } from "./NetworkingContext";
+import { NetworkingMenu } from "./NetworkingMenu";
 
 const urlParams = new URLSearchParams(window.location.search);
 export const gameIdFromUrl = urlParams.get("game");
 
-export interface State {
+export interface GameState {
 	roundIndex: number;
 	value: number[];
 	najava?: RowName;
@@ -28,40 +27,22 @@ export interface State {
 	blackout?: boolean;
 }
 
-function generateTailwindShades(baseColor: string) {
-	// These are roughly how Tailwind's default shades are spaced
-	const scale = chroma.scale(["#fff", baseColor, "#000"]).mode("lrgb");
-
-	const colors = {
-		50: scale(0.05).hex(),
-		100: scale(0.1).hex(),
-		200: scale(0.2).hex(),
-		300: scale(0.3).hex(),
-		400: scale(0.4).hex(),
-		500: scale(0.5).hex(), // base
-		600: scale(0.6).hex(),
-		700: scale(0.7).hex(),
-		800: scale(0.8).hex(),
-		900: scale(0.9).hex(),
-		950: scale(0.95).hex(),
-	};
-
-	for (const [key, value] of Object.entries(colors)) {
-		document.documentElement.style.setProperty("--main-" + key, value);
-	}
-}
-
 export interface TabelaState {
 	tabela: Cell[][];
 	setTabela: Dispatch<SetStateAction<Cell[][]>>;
 	updateTabela: (row: number, col: number, cell: Cell) => void;
 }
 
+export interface PeerDataState {
+	peerData: PeerData[];
+	setPeerData: Dispatch<SetStateAction<PeerData[]>>;
+}
+
 export const StateContext = createContext<{
-	state: State;
-	setState: Dispatch<SetStateAction<State>>;
+	state: GameState;
+	setState: Dispatch<SetStateAction<GameState>>;
 }>({
-	state: {} as State,
+	state: {} as GameState,
 	setState: () => {},
 });
 
@@ -69,6 +50,11 @@ export const TabelaContext = createContext<TabelaState>({
 	tabela: [] as Cell[][],
 	setTabela: () => {},
 	updateTabela: () => {},
+});
+
+export const PeerDataContext = createContext<PeerDataState>({
+	peerData: [] as PeerData[],
+	setPeerData: () => {},
 });
 
 const data = localStorage.getItem(gameIdFromUrl + "-data");
@@ -83,7 +69,7 @@ const Yamb = ({
 	hostId: string;
 	setHostId: Dispatch<SetStateAction<string>>;
 }) => {
-	const [state, setState] = useState<State>(
+	const [state, setState] = useState<GameState>(
 		dataObj?.state ?? {
 			roundIndex: 0,
 			value: [],
@@ -91,7 +77,9 @@ const Yamb = ({
 		}
 	);
 
-	const { peerData, peerId, registerDataCallback } = useNetworking();
+	const { peerData, setPeerData } = useContext(PeerDataContext);
+
+	const { peerId, registerDataCallback } = useNetworking();
 
 	const [scale, setScale] = useState(1);
 	const { tabela, updateTabela } = useContext(TabelaContext);
@@ -281,6 +269,88 @@ const App = () => {
 	const [tabela, setTabela] = useState<Cell[][]>(dataObj?.tabela ?? defaultTabela());
 	const [gameId, setGameId] = useState(gameIdFromUrl ? gameIdFromUrl : "");
 
+	const [peerData, setPeerData] = useState<PeerData[]>(dataObj?.peerData ?? []);
+
+	const { connectToAllPeers, registerCallback, registerDataCallback } = useNetworking();
+
+	const onReceivePeerData = (incoming: boolean, _conn: any, data: any) => {
+		if (!incoming) {
+			console.log(`Received peer data: ${data.data}`);
+			const peers = data.data.map((p: any) => p.id);
+			console.log("Peers: ", peers);
+			if (peers.length) connectToAllPeers(peers);
+			setPeerData(data.data);
+		}
+	};
+
+	const onReceiveName = (incoming: boolean, conn: any, data: any) => {
+		if (incoming) {
+			//console.log(`Received name. ${conn.peer} is named: ${data.name}`);
+			setPeerData((prev) =>
+				prev.map((p) => (p.id === conn.peer ? { ...p, name: data.name } : p))
+			);
+		}
+	};
+
+	const onReceiveMove = (_incoming: boolean, conn: any, data: any) => {
+		setPeerData((prev) =>
+			prev.map((p) =>
+				p.id === conn.peer && p.tabela == undefined ? { ...p, tabela: defaultTabela() } : p
+			)
+		);
+		data = data.data;
+		let rowIndex = data.rowIndex;
+		let colIndex = data.colIndex;
+		let value = data.value;
+		setPeerData((prev) => {
+			//data = data.data;
+			return prev.map((p) =>
+				p.id === conn.peer && p.tabela != undefined
+					? {
+							...p,
+							tabela: p.tabela.map((row, i) =>
+								i == rowIndex
+									? row.map((cell, j) =>
+											j == colIndex ? { ...cell, value } : cell
+									  )
+									: row
+							),
+					  }
+					: p
+			);
+		});
+	};
+
+	useEffect(() => {
+		registerCallback("open", (id) => {
+			if (peerData.length == 0) {
+				setPeerData([{ id, name: "", index: 0 }]);
+			}
+
+			console.log("CALLING OPEN");
+			console.log("MY ID IS: ", id);
+			console.log(
+				"PEER DATA IS: ",
+				peerData.map((p) => p.id)
+			);
+			connectToAllPeers(peerData.map((p) => p.id));
+		});
+
+		registerCallback("connection", (conn) => {
+			console.log(`Incoming connection from FROM APP ${conn.peer}`);
+			setPeerData((prev) => {
+				if (!prev.find((p) => p.id === conn.peer)) {
+					return [...prev, { id: conn.peer, name: "", index: prev.length }];
+				}
+				return prev;
+			});
+		});
+
+		registerDataCallback("peer-data", onReceivePeerData);
+		registerDataCallback("name", onReceiveName);
+		registerDataCallback("move", onReceiveMove);
+	}, []);
+
 	const [hostId, setHostId] = useState("");
 
 	const updateTabela = (row: number, col: number, value: Cell) => {
@@ -325,7 +395,7 @@ const App = () => {
 	return (
 		<div>
 			<TabelaContext.Provider value={{ tabela, setTabela, updateTabela }}>
-				<NetworkingProvider>
+				<PeerDataContext.Provider value={{ peerData, setPeerData }}>
 					{!hasStarted ? (
 						<NetworkingMenu
 							setHasStarted={setHasStarted}
@@ -336,7 +406,7 @@ const App = () => {
 					) : (
 						<Yamb gameId={gameId} hostId={hostId} setHostId={setHostId} />
 					)}
-				</NetworkingProvider>
+				</PeerDataContext.Provider>
 			</TabelaContext.Provider>
 		</div>
 	);
@@ -441,4 +511,27 @@ function encodeTabelaToCanvas(tabela: Cell[][], canvasRef: any, themeColor: any)
 	}
 
 	ctx.putImageData(imageData, 0, 0);
+}
+
+function generateTailwindShades(baseColor: string) {
+	// These are roughly how Tailwind's default shades are spaced
+	const scale = chroma.scale(["#fff", baseColor, "#000"]).mode("lrgb");
+
+	const colors = {
+		50: scale(0.05).hex(),
+		100: scale(0.1).hex(),
+		200: scale(0.2).hex(),
+		300: scale(0.3).hex(),
+		400: scale(0.4).hex(),
+		500: scale(0.5).hex(), // base
+		600: scale(0.6).hex(),
+		700: scale(0.7).hex(),
+		800: scale(0.8).hex(),
+		900: scale(0.9).hex(),
+		950: scale(0.95).hex(),
+	};
+
+	for (const [key, value] of Object.entries(colors)) {
+		document.documentElement.style.setProperty("--main-" + key, value);
+	}
 }

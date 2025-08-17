@@ -1,12 +1,10 @@
-import { useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import Peer from "peerjs";
+import { nanoid } from "nanoid";
 import QRCode from "qrcode";
+import { useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { PeerDataContext, TabelaContext } from "./App";
+import { type Cell } from "./BoardConstants";
 import { useNetworking, type PeerData } from "./NetworkingContext";
 import { ReadonlyYambBoard } from "./ReadonlyBoard";
-import { defaultTabela } from "./BoardConstants";
-import { type Cell } from "./BoardConstants";
-import { TabelaContext } from "./App";
-import { nanoid } from "nanoid";
 
 // stolen from chatgpt
 function formatDate(date: Date) {
@@ -22,6 +20,16 @@ function formatDate(date: Date) {
 	return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+const urlParams = new URLSearchParams(window.location.search);
+export const gameIdFromUrl = urlParams.get("game");
+const data = localStorage.getItem(gameIdFromUrl + "-data");
+let dataObj = data ? JSON.parse(data) : undefined;
+
+const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
+
+let index = dataObj?.peerData.findIndex((p: any) => p.id === savedPeerId);
+let savedName = dataObj?.peerData[index].name;
+
 export const NetworkingMenu = ({
 	setHasStarted,
 	setGameId,
@@ -33,26 +41,21 @@ export const NetworkingMenu = ({
 	hostId: string;
 	setHostId: Dispatch<SetStateAction<string>>;
 }) => {
-	const {
-		peerId,
-		peerData,
-		name,
-		setPeerData,
-		setName,
-		connectToPeer,
-		broadcastMessage,
-		sharePeerData,
-		registerDataCallback,
-	} = useNetworking();
+	const { peerId, connectToPeer, broadcastMessage, registerDataCallback, setNextPeerId } =
+		useNetworking();
 
 	// const [log, setLog] = useState<string[]>([]);
 	// const [input, setInput] = useState("");
+
+	const { peerData, setPeerData } = useContext(PeerDataContext);
 
 	const [hasJoinedHost, setHasJoinedHost] = useState(false);
 	const [isHost, setIsHost] = useState<boolean>(false);
 
 	const [isSaveLoaded, setIsSaveLoaded] = useState(false);
 	const { tabela, setTabela, updateTabela } = useContext(TabelaContext);
+
+	const [name, setName] = useState(savedName ?? "");
 
 	//const console.log = (msg: string) => setLog((l) => [...l, msg]);
 
@@ -70,6 +73,10 @@ export const NetworkingMenu = ({
 
 	const joinHost = () => {
 		const hostPeer = connectToPeer(hostId);
+		if (!hostPeer) {
+			console.log("Failed to connect to host peer with id: ", hostId);
+			return;
+		}
 		hostPeer.on("open", () => {
 			setHasJoinedHost(true);
 
@@ -78,9 +85,20 @@ export const NetworkingMenu = ({
 		setHasJoinedHost(true);
 	};
 
+	const sharePeerData = () => {
+		broadcastMessage("peer-data", peerData);
+		console.log("Sending peer data: ", peerData);
+	};
+
 	const startGame = () => {
 		sharePeerData();
 		setHasStarted(true);
+
+		// index after item with id = peerId
+		const me = peerData.findIndex((p) => p.id === peerId);
+		const nextPlayer = peerData[(me + 1) % peerData.length];
+		setNextPeerId(nextPlayer.id);
+
 		let newGameId = nanoid(8);
 		setGameId(newGameId);
 		broadcastMessage("start-game", newGameId);
@@ -89,6 +107,17 @@ export const NetworkingMenu = ({
 	const onReceiveStartGame = (incoming: boolean, _conn: any, data: any) => {
 		if (!incoming) {
 			setHasStarted(true);
+
+			console.log("Setting next peer id");
+			// fuck this shit
+			setPeerData((prev) => {
+				console.log("PEER DATA IS: ", prev);
+				const me = prev.findIndex((p) => p.id === peerId);
+				const nextPlayer = prev[(me + 1) % prev.length];
+				setNextPeerId(nextPlayer.id);
+				return prev;
+			});
+
 			setGameId(data.data as string);
 		}
 	};

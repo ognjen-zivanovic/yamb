@@ -1,18 +1,16 @@
+import { OpenAI } from "openai";
 import { useContext, useEffect, useState } from "react";
-import { type State, StateContext, TabelaContext } from "./App";
+import { PeerDataContext, StateContext, TabelaContext } from "./App";
+import { chooseCell, isCellActive } from "./Board";
 import {
 	ColumnNameFromString,
-	ColumnNames,
 	ReverseColumnNames,
 	ReverseRowNames,
 	RowNameFromString,
 	RowNames,
-	type Cell,
 	type ColumnName,
 	type RowName,
 } from "./BoardConstants";
-import { chooseCell, isCellActive } from "./Board";
-import client, { OpenAI } from "openai";
 import { useNetworking } from "./NetworkingContext";
 
 const diceImages = [
@@ -402,6 +400,7 @@ No extra text, no markdown, no explanations outside JSON.
 					setState,
 					broadcastMessage,
 					sendMessageToNextPlayer,
+					peerData: useContext(PeerDataContext).peerData,
 				});
 			}
 			return result;

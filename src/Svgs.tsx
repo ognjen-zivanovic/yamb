@@ -9,7 +9,7 @@ export const DownSvg = () => {
 			viewBox="0 0 512 512"
 			fill="currentcolor"
 			stroke="currentcolor"
-			className="w-full h-full"
+			className="h-full w-full"
 		>
 			<g transform="translate(64, 64) scale(0.75, 0.75)">{trianglePath}</g>
 		</svg>
@@ -23,7 +23,7 @@ export const UpSvg = () => {
 			viewBox="0 0 512 512"
 			fill="currentcolor"
 			stroke="currentcolor"
-			className="w-full h-full"
+			className="h-full w-full"
 		>
 			<g transform="translate(64, 64) scale(0.75, 0.75) rotate(180,256, 256)">
 				{trianglePath}
@@ -38,7 +38,7 @@ export const UpAndDown = () => (
 		viewBox="0 0 512 512"
 		fill="currentcolor"
 		stroke="currentcolor"
-		className="w-full h-full"
+		className="h-full w-full"
 	>
 		<g transform="translate(195, 100) scale(0.6, 0.6)">{trianglePath}</g>
 		<g transform="translate(5, 100) scale(0.6, 0.6) rotate(180, 256, 256)">{trianglePath}</g>
@@ -51,7 +51,7 @@ export const FromMiddleSvg = () => (
 		viewBox="0 0 512 512"
 		fill="currentcolor"
 		stroke="currentcolor"
-		className="w-full h-full"
+		className="h-full w-full"
 	>
 		<g transform="translate(64, 64) scale(0.75, 0.75)">
 			<g transform="translate(105, 247) scale(0.6, 0.6)">{trianglePath}</g>
@@ -69,7 +69,7 @@ export const FromSidesSvg = () => (
 		viewBox="0 0 512 512"
 		fill="currentcolor"
 		stroke="currentcolor"
-		className="w-full h-full"
+		className="h-full w-full"
 	>
 		<g transform="translate(64, 64) scale(0.75, 0.75)">
 			<g transform="translate(105, 247) scale(0.6, 0.6) rotate(180, 256, 256)">
