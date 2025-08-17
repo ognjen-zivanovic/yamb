@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createDefaultBoard } from "./components/Board/BoardConstants";
+import { ColumnNames, createDefaultBoard, RowNames } from "./components/Board/BoardConstants";
 import { type Cell } from "./components/Board/BoardConstants";
 import { useNetworking } from "./contexts/NetworkingContext";
 import { NetworkingMenu } from "./components/Networking/NetworkingMenu";
@@ -7,10 +7,10 @@ import { YambGame } from "./components/YambGame/YambGame";
 import { TabelaContext, PeerDataContext } from "./contexts/GameContext";
 
 const urlParams = new URLSearchParams(window.location.search);
-export const gameIdFromUrl = urlParams.get("game");
+const gameIdFromUrl = urlParams.get("game");
 
 const data = localStorage.getItem(gameIdFromUrl + "-data");
-export let dataObj = data ? JSON.parse(data) : undefined;
+let dataObj = data ? JSON.parse(data) : undefined;
 
 const App = () => {
 	const [hasStarted, setHasStarted] = useState(gameIdFromUrl ? true : false);
@@ -107,6 +107,69 @@ const App = () => {
 		setTabela((prev) => {
 			const copy = prev.map((row) => [...row]);
 			copy[row][col] = value;
+
+			const calculateSumOfFirstSum = (colIndex: number) => {
+				if (!copy[RowNames.Suma1][colIndex]?.value) {
+					let cnt = 0;
+					let sum = 0;
+					for (let i = 0; i < 6; i++) {
+						if (copy[i][colIndex]?.value != undefined) {
+							cnt++;
+							sum += copy[i][colIndex]?.value ?? 0;
+						}
+					}
+					if (sum > 60) {
+						sum += 30;
+					}
+
+					if (cnt == 6) {
+						copy[RowNames.Suma1][colIndex] = { value: sum, isAvailable: false };
+					}
+				}
+			};
+			const calculateSumOfSecondSum = (colIndex: number) => {
+				if (!copy[RowNames.Suma2][colIndex]?.value) {
+					let maxi = copy[RowNames.Maksimum][colIndex]?.value;
+					let mini = copy[RowNames.Minimum][colIndex]?.value;
+					let jedinice = copy[RowNames.Jedinice][colIndex]?.value;
+
+					if (maxi != undefined && mini != undefined && jedinice != undefined) {
+						let sum = Math.max(maxi - mini, 0) * jedinice;
+						copy[RowNames.Suma2][colIndex] = { value: sum, isAvailable: false };
+					}
+				}
+			};
+			const calculateSumOfLastSum = (colIndex: number) => {
+				if (!copy[RowNames.Suma3][colIndex]?.value) {
+					let sum = 0;
+					for (let rowIndex = RowNames.Kenta; rowIndex <= RowNames.Yamb; rowIndex++) {
+						if (copy[rowIndex][colIndex]?.value == undefined) {
+							return;
+						}
+						sum += copy[rowIndex][colIndex]?.value ?? 0;
+					}
+					copy[RowNames.Suma3][colIndex] = { value: sum, isAvailable: false };
+				}
+			};
+			const calculateSumOfRow = (rowName: (typeof RowNames)[keyof typeof RowNames]) => {
+				if (copy[rowName][ColumnNames.Yamb]?.value == undefined) {
+					let sum = 0;
+					for (let colIndex = 0; colIndex < 10; colIndex++) {
+						if (copy[rowName][colIndex]?.value == undefined) {
+							return;
+						}
+						sum += copy[rowName][colIndex]?.value ?? 0;
+					}
+					copy[rowName][ColumnNames.Yamb] = { value: sum, isAvailable: false };
+				}
+			};
+			if (row >= RowNames.Jedinice && row <= RowNames.Sestice) calculateSumOfFirstSum(col);
+			if (row == RowNames.Maksimum || row == RowNames.Minimum || row == RowNames.Jedinice)
+				calculateSumOfSecondSum(col);
+			if (row >= RowNames.Kenta && row <= RowNames.Yamb) calculateSumOfLastSum(col);
+			if (row == RowNames.Suma1 || row == RowNames.Suma2 || row == RowNames.Suma3)
+				calculateSumOfRow(row);
+
 			return copy;
 		});
 	};

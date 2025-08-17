@@ -43,6 +43,7 @@ export const chooseCell = ({
 	sendMessageToNextPlayer("next-player", {});
 	broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 };
+
 export const SetNewAvailable = (
 	tabela: Cell[][],
 	updateTabela: (row: number, col: number, cell: Cell) => void,
