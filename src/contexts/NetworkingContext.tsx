@@ -1,21 +1,13 @@
 import Peer, { type DataConnection, type PeerEvents } from "peerjs";
 import React, {
-	createContext,
-	useContext,
-	useEffect,
-	useRef,
-	useState,
 	type Dispatch,
 	type SetStateAction,
+	createContext,
+	useState,
+	useRef,
+	useEffect,
+	useContext,
 } from "react";
-import { type Cell } from "./BoardConstants";
-
-export interface PeerData {
-	id: string;
-	name?: string;
-	index?: number;
-	tabela?: Cell[][];
-}
 
 export interface NetworkingContextValue {
 	peerId: string;
@@ -32,26 +24,22 @@ export interface NetworkingContextValue {
 
 	setNextPeerId: Dispatch<SetStateAction<string>>;
 }
-
 const NetworkingContext = createContext<NetworkingContextValue | undefined>(undefined);
-
 const urlParams = new URLSearchParams(window.location.search);
-export const gameIdFromUrl = urlParams.get("game");
+const gameIdFromUrl = urlParams.get("game");
 const data = localStorage.getItem(gameIdFromUrl + "-data");
-let dataObj = data ? JSON.parse(data) : undefined;
-
+let savedGameData = data ? JSON.parse(data) : undefined;
 const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
-
 // find index of me
-let index = dataObj?.peerData.findIndex((p: any) => p.id === savedPeerId);
+let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedNextPeerId = undefined;
-if (index != undefined && dataObj != undefined) {
-	savedNextPeerId = dataObj.peerData[(index + 1) % dataObj.peerData.length]?.id;
+if (index != undefined && savedGameData != undefined) {
+	savedNextPeerId = savedGameData.peerData[(index + 1) % savedGameData.peerData.length]?.id;
 	console.log("Next peer id is ", savedNextPeerId);
 }
 
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
-	const [peer, setPeer] = useState<Peer | null>(savedPeerId ? new Peer(savedPeerId) : new Peer());
+	const [peer] = useState<Peer | null>(savedPeerId ? new Peer(savedPeerId) : new Peer());
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
 	const [peerId, setPeerId] = useState(savedPeerId ?? "");
 
@@ -135,7 +123,6 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	const sendMessageToNextPlayer = (type: string, data: any) => {
 		// find the index of me
-
 		console.log("Sending message to next player, next player hash is ", nextPeerId);
 		if (nextPeerId != "") {
 			const conn = connections.get(nextPeerId);

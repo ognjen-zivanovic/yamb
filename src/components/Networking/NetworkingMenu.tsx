@@ -1,10 +1,11 @@
 import { nanoid } from "nanoid";
 import QRCode from "qrcode";
-import { useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { PeerDataContext, TabelaContext } from "./App";
-import { type Cell } from "./BoardConstants";
-import { useNetworking, type PeerData } from "./NetworkingContext";
-import { ReadonlyYambBoard } from "./ReadonlyBoard";
+import { type Dispatch, type SetStateAction, useContext, useState, useEffect } from "react";
+import { type PeerData } from "../../App";
+import { PeerDataContext, TabelaContext } from "../../contexts/GameContext";
+import { useNetworking } from "../../contexts/NetworkingContext";
+import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
+import type { Cell } from "../Board/BoardConstants";
 
 // stolen from chatgpt
 function formatDate(date: Date) {
@@ -19,16 +20,13 @@ function formatDate(date: Date) {
 
 	return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
-
 const urlParams = new URLSearchParams(window.location.search);
-export const gameIdFromUrl = urlParams.get("game");
+const gameIdFromUrl = urlParams.get("game");
 const data = localStorage.getItem(gameIdFromUrl + "-data");
-let dataObj = data ? JSON.parse(data) : undefined;
-
+let savedGameData = data ? JSON.parse(data) : undefined;
 const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
-
-let index = dataObj?.peerData.findIndex((p: any) => p.id === savedPeerId);
-let savedName = dataObj?.peerData[index].name;
+let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
+let savedName = savedGameData?.peerData[index].name;
 
 export const NetworkingMenu = ({
 	setHasStarted,
@@ -46,7 +44,6 @@ export const NetworkingMenu = ({
 
 	// const [log, setLog] = useState<string[]>([]);
 	// const [input, setInput] = useState("");
-
 	const { peerData, setPeerData } = useContext(PeerDataContext);
 
 	const [hasJoinedHost, setHasJoinedHost] = useState(false);
@@ -58,13 +55,11 @@ export const NetworkingMenu = ({
 	const [name, setName] = useState(savedName ?? "");
 
 	//const console.log = (msg: string) => setLog((l) => [...l, msg]);
-
 	useEffect(() => {
 		setPeerData((prev) => prev.map((p) => (p.id === peerId ? { ...p, name } : p)));
 	}, [name]);
 
 	// Generate QR code and invite link when becoming host
-
 	const startHost = () => {
 		setIsHost(true);
 		setHostId(peerId);
@@ -210,7 +205,6 @@ export const NetworkingMenu = ({
 		</div>
 	);
 };
-
 const PreviousGameFromSave = ({
 	setTabela,
 	updateTabela,
@@ -231,10 +225,8 @@ const PreviousGameFromSave = ({
 
 	const loadAvailableSavedGames = () => {
 		// go throug each item saved in local storage, if there are items that start with the same 8 letters and end with -data and -peerId and -dice id then load them
-
 		// for each key if it doesnt end with -data or -peerId or -dice then remove it
 		// chop off the -data -peerId -dice and count if the number of occurences is 3
-
 		setPrevSavedGames([]);
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i);
@@ -275,8 +267,8 @@ const PreviousGameFromSave = ({
 	};
 
 	const loadGameFromLocalStorage = (game: SavedGame) => {
-		const dataObj = JSON.parse(localStorage.getItem(game.id + "-data")!).tabela;
-		setTabela(dataObj);
+		const savedGameData = JSON.parse(localStorage.getItem(game.id + "-data")!).tabela;
+		setTabela(savedGameData);
 		setIsSaveLoaded(true);
 	};
 
@@ -315,7 +307,6 @@ const PreviousGameFromSave = ({
 
 					// console.log("Pixel data:", pixels);
 					// console.log(`Image dimensions: ${img.width}x${img.height}`);
-
 					let start = -1;
 					let startCnt = 0;
 
@@ -445,7 +436,6 @@ const PreviousGameFromSave = ({
 		</div>
 	);
 };
-
 const PeerDataPanel = ({
 	peerData,
 	setPeerData,
@@ -453,7 +443,6 @@ const PeerDataPanel = ({
 	peerData: PeerData[];
 	setPeerData: Dispatch<SetStateAction<PeerData[]>>;
 }) => {
-	// Drag and drop state
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 	const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -538,7 +527,6 @@ const PeerDataPanel = ({
 		</div>
 	);
 };
-
 const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 	``;
 	const [qrCodeUrl, setQrCodeUrl] = useState("");

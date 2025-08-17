@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { NetworkingProvider } from "./NetworkingContext";
+import { NetworkingProvider } from "./contexts/NetworkingContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
 	<NetworkingProvider>

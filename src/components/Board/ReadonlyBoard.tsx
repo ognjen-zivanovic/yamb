@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
 	ColumnNames,
-	RowNames,
-	headerIcons,
-	rowIcons,
-	type Cell,
+	columnHeaders,
 	type RowName,
+	type Cell,
+	RowNames,
+	rowHeaders,
 } from "./BoardConstants";
 
 const ReadonlyHeaderRow = () => {
@@ -23,7 +23,7 @@ const ReadonlyHeaderRow = () => {
 							: ""
 					}`}
 				>
-					{headerIcons[index % headerIcons.length]}
+					{columnHeaders[index % columnHeaders.length]}
 				</div>
 			))}
 			<div className="border-1 flex h-full w-[calc(14*100%/106)] items-center justify-center border-main-500 bg-white text-center text-[1.6rem]">
@@ -32,7 +32,6 @@ const ReadonlyHeaderRow = () => {
 		</div>
 	);
 };
-
 const ReadonlyRow = ({ rowIndex, tabela }: { rowIndex: RowName; tabela: Cell[][] }) => {
 	return (
 		<div className="flex h-[calc(7*100%/118)] flex-row">
@@ -47,7 +46,7 @@ const ReadonlyRow = ({ rowIndex, tabela }: { rowIndex: RowName; tabela: Cell[][]
 					: ""
 			}`}
 			>
-				{rowIcons[rowIndex % rowIcons.length]}
+				{rowHeaders[rowIndex % rowHeaders.length]}
 			</div>
 			{Array.from({ length: 10 }).map((_, colIndex) => {
 				return (

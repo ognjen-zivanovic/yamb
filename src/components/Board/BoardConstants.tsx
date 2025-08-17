@@ -1,4 +1,4 @@
-import { DownSvg, FromMiddleSvg, FromSidesSvg, UpAndDown, UpSvg } from "./Svgs";
+import { DownSvg, UpSvg, UpAndDown, FromMiddleSvg, FromSidesSvg } from "../../Svgs";
 
 export interface Cell {
 	value?: number;
@@ -36,8 +36,7 @@ export const RowNames = {
 	Yamb: 14,
 	Suma3: 15,
 } as const;
-
-export const ReverseRowNames = {
+export const ReverseRowNames: Record<number, keyof typeof RowNames> = {
 	0: "Jedinice",
 	1: "Dvojke",
 	2: "Trojke",
@@ -56,7 +55,7 @@ export const ReverseRowNames = {
 	15: "Suma3",
 };
 
-export const ReverseColumnNames = {
+export const ReverseColumnNames: Record<number, keyof typeof ColumnNames> = {
 	0: "OdGore",
 	1: "OdDole",
 	2: "Slobodna",
@@ -67,7 +66,7 @@ export const ReverseColumnNames = {
 	7: "OdGoreIDole",
 };
 
-export const RowNameFromString = {
+export const RowNameFromString: Record<string, RowName> = {
 	Jedinice: RowNames.Jedinice,
 	Dvojke: RowNames.Dvojke,
 	Trojke: RowNames.Trojke,
@@ -85,7 +84,7 @@ export const RowNameFromString = {
 	Yamb: RowNames.Yamb,
 };
 
-export const ColumnNameFromString = {
+export const ColumnNameFromString: Record<string, ColumnName> = {
 	OdGore: ColumnNames.OdGore,
 	OdDole: ColumnNames.OdDole,
 	Slobodna: ColumnNames.Slobodna,
@@ -95,11 +94,9 @@ export const ColumnNameFromString = {
 	OdSredine: ColumnNames.OdSredine,
 	OdGoreIDole: ColumnNames.OdGoreIDole,
 };
-
 export type RowName = (typeof RowNames)[keyof typeof RowNames];
 export type ColumnName = (typeof ColumnNames)[keyof typeof ColumnNames];
-
-export const headerIcons = [
+export const columnHeaders = [
 	<DownSvg />,
 	<UpSvg />,
 	<UpAndDown />,
@@ -112,7 +109,7 @@ export const headerIcons = [
 	<div className="text-[2.1rem]">M</div>,
 ];
 
-export const rowIcons = [
+export const rowHeaders = [
 	<div className="text-[1.9rem]">1</div>,
 	<div className="text-[1.9rem]">2</div>,
 	<div className="text-[1.9rem]">3</div>,
@@ -131,7 +128,7 @@ export const rowIcons = [
 	<div className="text-[2.1rem]">Σ</div>,
 ];
 
-export const defaultTabela = (): Cell[][] => {
+export const createDefaultBoard = (): Cell[][] => {
 	const tabela: Cell[][] = Array.from({ length: 16 }, () => []);
 
 	tabela[RowNames.Jedinice][ColumnNames.OdGore] = { value: undefined, isAvailable: true };
