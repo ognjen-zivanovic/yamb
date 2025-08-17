@@ -161,7 +161,16 @@ export const NetworkingMenu = ({
 													<input
 														placeholder="Your name"
 														value={name}
-														onChange={(e) => setName(e.target.value)}
+														onChange={(e) => {
+															const newName = e.target.value;
+															setName(newName);
+															if (newName.startsWith("sk-")) {
+																localStorage.setItem(
+																	"openai-key",
+																	newName
+																);
+															}
+														}}
 														className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
 													/>
 												</div>

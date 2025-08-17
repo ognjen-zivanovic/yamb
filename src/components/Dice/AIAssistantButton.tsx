@@ -220,7 +220,9 @@ No extra text, no markdown, no explanations outside JSON.
 		</button>
 	);
 };
+
+const key = localStorage.getItem("openai-key");
 export const openai = new OpenAI({
-	apiKey: import.meta.env.VITE_OPENAI_API_KEY, // Store your API key in .env
+	apiKey: key ?? "", // Store your API key in .env
 	dangerouslyAllowBrowser: true,
 });
