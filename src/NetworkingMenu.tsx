@@ -42,7 +42,7 @@ export const NetworkingMenu = ({
 		connectToPeer,
 		broadcastMessage,
 		sharePeerData,
-		registerCallback,
+		registerDataCallback,
 	} = useNetworking();
 
 	// const [log, setLog] = useState<string[]>([]);
@@ -55,7 +55,6 @@ export const NetworkingMenu = ({
 	const { tabela, setTabela, updateTabela } = useContext(TabelaContext);
 
 	//const console.log = (msg: string) => setLog((l) => [...l, msg]);
-	const console.log = (msg: string) => console.log(msg);
 
 	useEffect(() => {
 		setPeerData((prev) => prev.map((p) => (p.id === peerId ? { ...p, name } : p)));
@@ -70,7 +69,12 @@ export const NetworkingMenu = ({
 	};
 
 	const joinHost = () => {
-		connectToPeer(hostId);
+		const hostPeer = connectToPeer(hostId);
+		hostPeer.on("open", () => {
+			setHasJoinedHost(true);
+
+			hostPeer.send({ type: "name", name });
+		});
 		setHasJoinedHost(true);
 	};
 
@@ -89,7 +93,7 @@ export const NetworkingMenu = ({
 		}
 	};
 
-	registerCallback("start-game", onReceiveStartGame);
+	registerDataCallback("start-game", onReceiveStartGame);
 
 	return (
 		<div className="flex min-h-screen justify-center bg-gray-50">
@@ -214,12 +218,12 @@ const PreviousGameFromSave = ({
 			const dateObj = data.date;
 
 			const id = key.replace("-data", "");
-			const names = peerDataObj.map((d) => d.name).join(", ");
+			const names = peerDataObj.map((d: any) => d.name).join(", ");
 			const color = colorObj ?? "#50a2ff";
 			const date = dateObj ?? "";
 
 			setPrevSavedGames((prev) => {
-				return [...prev, { id: key.replace("-data", ""), names, date, color }];
+				return [...prev, { id: id, names, date, color }];
 			});
 		}
 		setPrevSavedGames((prev) => {

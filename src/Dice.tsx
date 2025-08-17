@@ -54,7 +54,7 @@ export const DicePicker = ({
 
 	const [rolledDice, setRolledDice] = useState<number[]>(dataObj?.rolledDice ?? []);
 	const [chosenDice, setChosenDice] = useState<number[]>(dataObj?.chosenDice ?? []);
-	const [numChosenDice, setNumChosenDice] = useState(dataObj?.numChosenDice ?? 0);
+	const [numChosenDice, setNumChosenDice] = useState<number>(dataObj?.numChosenDice ?? 0);
 
 	const { state, setState } = useContext(StateContext);
 	useEffect(() => {

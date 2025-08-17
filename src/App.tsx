@@ -91,7 +91,7 @@ const Yamb = ({
 		}
 	);
 
-	const { peerData, peerId, registerCallback } = useNetworking();
+	const { peerData, peerId, registerDataCallback } = useNetworking();
 
 	const [scale, setScale] = useState(1);
 	const { tabela, updateTabela } = useContext(TabelaContext);
@@ -133,8 +133,8 @@ const Yamb = ({
 	};
 
 	useEffect(() => {
-		registerCallback("najava", onReceiveNajava);
-		registerCallback("next-player", onReceivePreviousPlayersMove);
+		registerDataCallback("najava", onReceiveNajava);
+		registerDataCallback("next-player", onReceivePreviousPlayersMove);
 	}, []);
 
 	function getRandomColor() {

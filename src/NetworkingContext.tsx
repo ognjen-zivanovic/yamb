@@ -7,7 +7,7 @@ import React, {
 	type Dispatch,
 	type SetStateAction,
 } from "react";
-import Peer from "peerjs";
+import Peer, { type DataConnection, type PeerEvents } from "peerjs";
 import { defaultTabela, type Cell } from "./BoardConstants";
 
 export interface PeerData {
@@ -26,11 +26,11 @@ export interface NetworkingContextValue {
 	name: string;
 	setName: Dispatch<SetStateAction<string>>;
 
-	connectToPeer: (peerId: string) => void;
+	connectToPeer: (peerId: string) => DataConnection;
 	broadcastMessage: (type: string, data: any) => void;
 	sharePeerData: () => void;
 	sendMessageToNextPlayer: (type: string, data: any) => void;
-	registerCallback: (type: string, callback: (...args: any[]) => void) => void;
+	registerDataCallback: (type: string, callback: (...args: any[]) => void) => void;
 }
 
 const NetworkingContext = createContext<NetworkingContextValue | undefined>(undefined);
@@ -43,9 +43,8 @@ let dataObj = data ? JSON.parse(data) : undefined;
 const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
 
 // find index of me
-let index = dataObj?.peerData.findIndex((p) => p.id === savedPeerId);
+let index = dataObj?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedName = dataObj?.peerData[index].name;
-console.log("MY NAME IS: ", savedName);
 
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
 	const [peer, setPeer] = useState<Peer | null>(savedPeerId ? new Peer(savedPeerId) : new Peer());
@@ -60,6 +59,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 
 	useEffect(() => {
 		if (peer == null) return;
+		console.log(peer);
 		peer.on("open", (id) => {
 			setPeerId(id);
 			if (peerData.length == 0) {
@@ -87,6 +87,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		if (!peer) return;
 		const conn = peer.connect(id);
 		setupConnection(conn);
+		return conn;
 	};
 
 	const connectToPeers = (peerIds: string[]) => {
@@ -97,7 +98,11 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		});
 	};
 
-	const registerCallback = (type: string, callback: (...args: any[]) => void) => {
+	const registerCallback = (type: keyof PeerEvents, callback: (...args: any[]) => void) => {
+		peer?.on(type, callback);
+	};
+
+	const registerDataCallback = (type: string, callback: (...args: any[]) => void) => {
 		callbacksRef.current.set(type, callback);
 	};
 
@@ -150,17 +155,15 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 	};
 
 	useEffect(() => {
-		registerCallback("peer-data", onReceivePeerData);
-		registerCallback("name", onReceiveName);
-		registerCallback("move", onReceiveMove);
+		registerDataCallback("peer-data", onReceivePeerData);
+		registerDataCallback("name", onReceiveName);
+		registerDataCallback("move", onReceiveMove);
 	}, []);
 
 	const setupConnection = (conn: any, incoming = false) => {
 		const handleOpen = () => {
 			setConnections((prev) => new Map(prev.set(conn.peer, conn)));
-			if (!incoming) {
-				conn.send({ type: "name", name });
-			}
+
 			setPeerData((prev) => {
 				if (!prev.find((p) => p.id === conn.peer)) {
 					return [...prev, { id: conn.peer, name: "", index: prev.length }];
@@ -230,7 +233,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 				broadcastMessage,
 				sharePeerData,
 				sendMessageToNextPlayer,
-				registerCallback,
+				registerDataCallback,
 			}}
 		>
 			{children}
