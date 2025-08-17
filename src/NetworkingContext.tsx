@@ -18,9 +18,6 @@ export interface PeerData {
 }
 
 export interface NetworkingContextValue {
-	hostId: string;
-	setHostId: Dispatch<SetStateAction<string>>;
-
 	peerId: string;
 
 	peerData: PeerData[];
@@ -41,7 +38,7 @@ const NetworkingContext = createContext<NetworkingContextValue | undefined>(unde
 const urlParams = new URLSearchParams(window.location.search);
 export const gameIdFromUrl = urlParams.get("game");
 const data = localStorage.getItem(gameIdFromUrl + "-data");
-var dataObj = data ? JSON.parse(data) : undefined;
+let dataObj = data ? JSON.parse(data) : undefined;
 
 const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
 
@@ -53,7 +50,6 @@ console.log("MY NAME IS: ", savedName);
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
 	const [peer, setPeer] = useState<Peer | null>(savedPeerId ? new Peer(savedPeerId) : new Peer());
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
-	const [hostId, setHostId] = useState("");
 	const [peerId, setPeerId] = useState(savedPeerId ?? "");
 	const [peerData, setPeerData] = useState<PeerData[]>(dataObj?.peerData ?? []);
 	const [name, setName] = useState(savedName ?? "");
@@ -62,20 +58,6 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 	// Use a ref so event handlers always see the latest callbacks without stale closures
 	const callbacksRef = useRef<Map<string, (...args: any[]) => void>>(new Map());
 
-	const appendLog = (msg: string) => console.log(msg);
-
-	useEffect(() => {
-		// Check for host ID in URL parameters
-		const urlParams = new URLSearchParams(window.location.search);
-		const hostIdFromUrl = urlParams.get("host");
-		if (hostIdFromUrl) {
-			setHostId(hostIdFromUrl);
-			appendLog(`Host ID loaded from URL: ${hostIdFromUrl}`);
-			// remove it from url
-			window.history.replaceState({}, "", window.location.pathname);
-		}
-	}, []);
-
 	useEffect(() => {
 		if (peer == null) return;
 		peer.on("open", (id) => {
@@ -83,7 +65,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 			if (peerData.length == 0) {
 				setPeerData([{ id, name: "", index: 0 }]);
 			}
-			appendLog(`Your Peer ID: ${id}`);
+			console.log(`Your Peer ID: ${id}`);
 
 			for (let otherPeer of peerData) {
 				if (connections.has(otherPeer.id) || otherPeer.id == peerId) continue;
@@ -92,7 +74,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		});
 
 		peer.on("connection", (conn) => {
-			appendLog(`Incoming connection from ${conn.peer}`);
+			console.log(`Incoming connection from ${conn.peer}`);
 			setupConnection(conn, true); // Incoming = host side
 		});
 
@@ -174,12 +156,10 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 	}, []);
 
 	const setupConnection = (conn: any, incoming = false) => {
-		conn.on("open", () => {
-			//console.log(`Connected to ${conn.peer}`);
+		const handleOpen = () => {
 			setConnections((prev) => new Map(prev.set(conn.peer, conn)));
 			if (!incoming) {
 				conn.send({ type: "name", name });
-				//console.log(`Sent name: ${name}`);
 			}
 			setPeerData((prev) => {
 				if (!prev.find((p) => p.id === conn.peer)) {
@@ -187,22 +167,26 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 				}
 				return prev;
 			});
+		};
 
-			conn.on("data", (data: any) => {
-				const map = callbacksRef.current;
-				if (map.has(data.type)) {
-					map.get(data.type)?.(incoming, conn, data);
-				}
-			});
-		});
+		const handleData = (data: any) => {
+			const map = callbacksRef.current;
+			if (map.has(data.type)) {
+				map.get(data.type)?.(incoming, conn, data);
+			}
+		};
 
-		conn.on("close", () => {
+		const handleClose = () => {
 			setConnections((prev) => {
-				let copy = new Map(prev);
+				const copy = new Map(prev);
 				copy.delete(conn.peer);
 				return copy;
 			});
-		});
+		};
+
+		conn.on("open", handleOpen);
+		conn.on("data", handleData);
+		conn.on("close", handleClose);
 	};
 
 	const broadcastMessage = (type: string, data: any) => {
@@ -237,11 +221,9 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 	return (
 		<NetworkingContext.Provider
 			value={{
-				hostId,
 				peerId,
 				peerData,
 				name,
-				setHostId,
 				setPeerData,
 				setName,
 				connectToPeer,

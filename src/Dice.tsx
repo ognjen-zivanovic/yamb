@@ -30,7 +30,7 @@ const openai = new OpenAI({
 	dangerouslyAllowBrowser: true,
 });
 const urlParams = new URLSearchParams(window.location.search);
-export const gameIdFromUrl = urlParams.get("game");
+const gameIdFromUrl = urlParams.get("game");
 const data = localStorage.getItem(gameIdFromUrl + "-dice");
 const dataObj = data ? JSON.parse(data) : undefined;
 
@@ -87,13 +87,13 @@ export const DicePicker = ({
 		dice.sort();
 		for (let i = 1; i <= 6; i++) {
 			if (numOccurences[i] >= 3) {
-				newValues[RowNames.Triling] = Math.max(newValues[RowNames.Triling], 3 * i + 30);
+				newValues[RowNames.Triling] = Math.max(newValues[RowNames.Triling], 3 * i + 20);
 			}
 			if (numOccurences[i] >= 4) {
-				newValues[RowNames.Kare] = Math.max(newValues[RowNames.Ful], 4 * i + 30);
+				newValues[RowNames.Kare] = Math.max(newValues[RowNames.Ful], 4 * i + 40);
 			}
 			if (numOccurences[i] >= 5) {
-				newValues[RowNames.Yamb] = Math.max(newValues[RowNames.Kare], 5 * i + 30);
+				newValues[RowNames.Yamb] = Math.max(newValues[RowNames.Kare], 5 * i + 50);
 			}
 		}
 		if (
@@ -363,10 +363,6 @@ No extra text, no markdown, no explanations outside JSON.
 		];
 
 		console.log(messages);
-
-		const list = await openai.models.list();
-
-		console.log(list);
 
 		const response = await openai.chat.completions.create({
 			//model: "gpt-3.5-turbo-1106",

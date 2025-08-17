@@ -72,9 +72,17 @@ export const TabelaContext = createContext<TabelaState>({
 });
 
 const data = localStorage.getItem(gameIdFromUrl + "-data");
-var dataObj = data ? JSON.parse(data) : undefined;
+let dataObj = data ? JSON.parse(data) : undefined;
 
-const Yamb = ({ gameId }: { gameId: string }) => {
+const Yamb = ({
+	gameId,
+	hostId,
+	setHostId,
+}: {
+	gameId: string;
+	hostId: string;
+	setHostId: Dispatch<SetStateAction<string>>;
+}) => {
 	const [state, setState] = useState<State>(
 		dataObj?.state ?? {
 			roundIndex: 0,
@@ -82,7 +90,8 @@ const Yamb = ({ gameId }: { gameId: string }) => {
 			isMyMove: false,
 		}
 	);
-	const { peerData, peerId, registerCallback, hostId } = useNetworking();
+
+	const { peerData, peerId, registerCallback } = useNetworking();
 
 	const [scale, setScale] = useState(1);
 	const { tabela, updateTabela } = useContext(TabelaContext);
@@ -116,7 +125,7 @@ const Yamb = ({ gameId }: { gameId: string }) => {
 		localStorage.setItem(gameId + "-peerId", peerId); // should this be moved to NetworkingContext?
 	}, [state, tabela, peerData, themeColor]);
 
-	const onRecievePreviousPlayersMove = (_incoming: boolean, _conn: any, _data: any) => {
+	const onReceivePreviousPlayersMove = (_incoming: boolean, _conn: any, _data: any) => {
 		setState((prev) => ({ ...prev, isMyMove: true }));
 	};
 	const onReceiveNajava = (_incoming: boolean, _conn: any, data: any) => {
@@ -125,13 +134,13 @@ const Yamb = ({ gameId }: { gameId: string }) => {
 
 	useEffect(() => {
 		registerCallback("najava", onReceiveNajava);
-		registerCallback("next-player", onRecievePreviousPlayersMove);
+		registerCallback("next-player", onReceivePreviousPlayersMove);
 	}, []);
 
 	function getRandomColor() {
-		var letters = "0123456789ABCDEF";
-		var color = "#";
-		for (var i = 0; i < 6; i++) {
+		let letters = "0123456789ABCDEF";
+		let color = "#";
+		for (let i = 0; i < 6; i++) {
 			color += letters[Math.floor(Math.random() * 16)];
 		}
 		return color;
@@ -152,104 +161,7 @@ const Yamb = ({ gameId }: { gameId: string }) => {
 
 	useEffect(() => {
 		try {
-			const rows = tabela.length;
-			const cols = tabela.reduce((max, r) => Math.max(max, r.length), 0);
-			const totalCells = rows * cols;
-
-			let headerSize = 4;
-			// 4 pixels
-			// first pixel stores the first character of the name in R, second in G, third in B and 255 in A
-			// second pixel stores the fourth character of the name in R, fifth in G, sixth in B and 255 in A
-			// third one stores rows in R, columns in G, and 255 in B and A
-			// fourth one stores the theme color
-
-			const size = Math.ceil(Math.sqrt(totalCells + headerSize || 1));
-			const canvas = canvasRef.current!;
-			const w = size * size;
-			const h = 1;
-			canvas.width = w;
-			canvas.height = h;
-			const ctx = canvas.getContext("2d")!;
-			if (!ctx) throw new Error("2D context not available");
-
-			const imageData = ctx.createImageData(w, h);
-			const data = imageData.data;
-
-			data[0 * 4 + 0] = "O".charCodeAt(0) & 0xff;
-			data[0 * 4 + 1] = "G".charCodeAt(0) & 0xff;
-			data[0 * 4 + 2] = "N".charCodeAt(0) & 0xff;
-			data[0 * 4 + 3] = 255;
-
-			data[1 * 4 + 0] = "J".charCodeAt(0) & 0xff;
-			data[1 * 4 + 1] = "E".charCodeAt(0) & 0xff;
-			data[1 * 4 + 2] = "N".charCodeAt(0) & 0xff;
-			data[1 * 4 + 3] = 255;
-
-			data[2 * 4 + 0] = rows & 0xff;
-			data[2 * 4 + 1] = cols & 0xff;
-			data[2 * 4 + 2] = 255;
-			data[2 * 4 + 3] = 255;
-
-			let colorString = themeColor;
-			colorString = colorString.replace("#", "");
-
-			let RColor = parseInt(colorString.substring(0, 2), 16);
-			let GColor = parseInt(colorString.substring(2, 4), 16);
-			let BColor = parseInt(colorString.substring(4, 6), 16);
-			let AColor = 255;
-
-			data[3 * 4 + 0] = RColor;
-			data[3 * 4 + 1] = GColor;
-			data[3 * 4 + 2] = BColor;
-			data[3 * 4 + 3] = AColor;
-
-			console.log("Encoding with color: ", RColor, GColor, BColor, AColor);
-
-			// Encode cells row-major into pixels
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) {
-					const cellIndex = r * cols + c + headerSize;
-					const pixelOffset = cellIndex * 4;
-
-					const cell = tabela[r]?.[c];
-					let value = 0; // if undefined, value is 0
-					let available = 2; // 2 = undefined, 1 = true, 0 = false
-					let hasValue = 1; // 0 = has value, 1 = undefined / no value
-
-					if (cell) {
-						if (cell.value !== undefined) {
-							// clamp to int8
-							const v = cell.value;
-							value = Math.max(0, Math.min(255, v));
-						}
-						if (cell.isAvailable !== undefined) {
-							available = cell.isAvailable ? 1 : 0;
-						}
-						if (cell.value !== undefined) {
-							hasValue = 0;
-						}
-					}
-
-					// pack int16 big-endian into R,G
-					const i8 = value & 0xff;
-
-					// 50a2ff
-					data[pixelOffset + 0] = i8 ^ RColor; // R
-					data[pixelOffset + 1] = hasValue ^ GColor; // G: 0
-					data[pixelOffset + 2] = available ^ BColor; // B: value
-					data[pixelOffset + 3] = 255; // A
-				}
-			}
-
-			// Ensure remaining pixels (padding) are opaque black
-			for (let i = (totalCells + headerSize) * 4; i < data.length; i += 4) {
-				data[i + 0] = RColor;
-				data[i + 1] = GColor;
-				data[i + 2] = BColor;
-				data[i + 3] = AColor;
-			}
-
-			ctx.putImageData(imageData, 0, 0);
+			encodeTabelaToCanvas(tabela, canvasRef, themeColor);
 
 			// 4) Save as PNG
 
@@ -369,6 +281,8 @@ const App = () => {
 	const [tabela, setTabela] = useState<Cell[][]>(dataObj?.tabela ?? defaultTabela());
 	const [gameId, setGameId] = useState(gameIdFromUrl ? gameIdFromUrl : "");
 
+	const [hostId, setHostId] = useState("");
+
 	const updateTabela = (row: number, col: number, value: Cell) => {
 		setTabela((prev) => {
 			const copy = prev.map((row) => [...row]);
@@ -382,6 +296,15 @@ const App = () => {
 		const gameIdFromUrl = urlParams.get("game");
 		if (gameIdFromUrl) {
 			setHasStarted(true);
+		}
+
+		const hostIdFromUrl = urlParams.get("host");
+		if (hostIdFromUrl) {
+			setHostId(hostIdFromUrl);
+
+			console.log(`Host ID loaded from URL: ${hostIdFromUrl}`);
+			// remove it from url
+			window.history.replaceState({}, "", window.location.pathname);
 		}
 	}, []);
 
@@ -404,9 +327,14 @@ const App = () => {
 			<TabelaContext.Provider value={{ tabela, setTabela, updateTabela }}>
 				<NetworkingProvider>
 					{!hasStarted ? (
-						<NetworkingMenu setHasStarted={setHasStarted} setGameId={setGameId} />
+						<NetworkingMenu
+							setHasStarted={setHasStarted}
+							setGameId={setGameId}
+							hostId={hostId}
+							setHostId={setHostId}
+						/>
 					) : (
-						<Yamb gameId={gameId} />
+						<Yamb gameId={gameId} hostId={hostId} setHostId={setHostId} />
 					)}
 				</NetworkingProvider>
 			</TabelaContext.Provider>
@@ -415,3 +343,102 @@ const App = () => {
 };
 
 export default App;
+function encodeTabelaToCanvas(tabela: Cell[][], canvasRef: any, themeColor: any) {
+	const rows = tabela.length;
+	const cols = tabela.reduce((max, r) => Math.max(max, r.length), 0);
+	const totalCells = rows * cols;
+
+	let headerSize = 4;
+	// 4 pixels
+	// first pixel stores the first character of the name in R, second in G, third in B and 255 in A
+	// second pixel stores the fourth character of the name in R, fifth in G, sixth in B and 255 in A
+	// third one stores rows in R, columns in G, and 255 in B and A
+	// fourth one stores the theme color
+	const size = Math.ceil(Math.sqrt(totalCells + headerSize || 1));
+	const canvas = canvasRef.current!;
+	const w = size * size;
+	const h = 1;
+	canvas.width = w;
+	canvas.height = h;
+	const ctx = canvas.getContext("2d")!;
+	if (!ctx) throw new Error("2D context not available");
+
+	const imageData = ctx.createImageData(w, h);
+	const data = imageData.data;
+
+	data[0 * 4 + 0] = "O".charCodeAt(0) & 0xff;
+	data[0 * 4 + 1] = "G".charCodeAt(0) & 0xff;
+	data[0 * 4 + 2] = "N".charCodeAt(0) & 0xff;
+	data[0 * 4 + 3] = 255;
+
+	data[1 * 4 + 0] = "J".charCodeAt(0) & 0xff;
+	data[1 * 4 + 1] = "E".charCodeAt(0) & 0xff;
+	data[1 * 4 + 2] = "N".charCodeAt(0) & 0xff;
+	data[1 * 4 + 3] = 255;
+
+	data[2 * 4 + 0] = rows & 0xff;
+	data[2 * 4 + 1] = cols & 0xff;
+	data[2 * 4 + 2] = 255;
+	data[2 * 4 + 3] = 255;
+
+	let colorString = themeColor;
+	colorString = colorString.replace("#", "");
+
+	let RColor = parseInt(colorString.substring(0, 2), 16);
+	let GColor = parseInt(colorString.substring(2, 4), 16);
+	let BColor = parseInt(colorString.substring(4, 6), 16);
+	let AColor = 255;
+
+	data[3 * 4 + 0] = RColor;
+	data[3 * 4 + 1] = GColor;
+	data[3 * 4 + 2] = BColor;
+	data[3 * 4 + 3] = AColor;
+
+	console.log("Encoding with color: ", RColor, GColor, BColor, AColor);
+
+	// Encode cells row-major into pixels
+	for (let r = 0; r < rows; r++) {
+		for (let c = 0; c < cols; c++) {
+			const cellIndex = r * cols + c + headerSize;
+			const pixelOffset = cellIndex * 4;
+
+			const cell = tabela[r]?.[c];
+			let value = 0; // if undefined, value is 0
+			let available = 2; // 2 = undefined, 1 = true, 0 = false
+			let hasValue = 1; // 0 = has value, 1 = undefined / no value
+
+			if (cell) {
+				if (cell.value !== undefined) {
+					// clamp to int8
+					const v = cell.value;
+					value = Math.max(0, Math.min(255, v));
+				}
+				if (cell.isAvailable !== undefined) {
+					available = cell.isAvailable ? 1 : 0;
+				}
+				if (cell.value !== undefined) {
+					hasValue = 0;
+				}
+			}
+
+			// pack int16 big-endian into R,G
+			const i8 = value & 0xff;
+
+			// 50a2ff
+			data[pixelOffset + 0] = i8 ^ RColor; // R
+			data[pixelOffset + 1] = hasValue ^ GColor; // G: 0
+			data[pixelOffset + 2] = available ^ BColor; // B: value
+			data[pixelOffset + 3] = 255; // A
+		}
+	}
+
+	// Ensure remaining pixels (padding) are opaque black
+	for (let i = (totalCells + headerSize) * 4; i < data.length; i += 4) {
+		data[i + 0] = RColor;
+		data[i + 1] = GColor;
+		data[i + 2] = BColor;
+		data[i + 3] = AColor;
+	}
+
+	ctx.putImageData(imageData, 0, 0);
+}

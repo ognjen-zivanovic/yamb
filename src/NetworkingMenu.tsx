@@ -25,16 +25,18 @@ function formatDate(date: Date) {
 export const NetworkingMenu = ({
 	setHasStarted,
 	setGameId,
+	hostId,
+	setHostId,
 }: {
 	setHasStarted: (hasStarted: boolean) => void;
 	setGameId: (gameId: string) => void;
+	hostId: string;
+	setHostId: Dispatch<SetStateAction<string>>;
 }) => {
 	const {
-		hostId,
 		peerId,
 		peerData,
 		name,
-		setHostId,
 		setPeerData,
 		setName,
 		connectToPeer,
@@ -52,8 +54,8 @@ export const NetworkingMenu = ({
 	const [isSaveLoaded, setIsSaveLoaded] = useState(false);
 	const { tabela, setTabela, updateTabela } = useContext(TabelaContext);
 
-	//const appendLog = (msg: string) => setLog((l) => [...l, msg]);
-	const appendLog = (msg: string) => console.log(msg);
+	//const console.log = (msg: string) => setLog((l) => [...l, msg]);
+	const console.log = (msg: string) => console.log(msg);
 
 	useEffect(() => {
 		setPeerData((prev) => prev.map((p) => (p.id === peerId ? { ...p, name } : p)));
@@ -64,7 +66,7 @@ export const NetworkingMenu = ({
 	const startHost = () => {
 		setIsHost(true);
 		setHostId(peerId);
-		appendLog("Started as host. Share your ID with others.");
+		console.log("Started as host. Share your ID with others.");
 	};
 
 	const joinHost = () => {
