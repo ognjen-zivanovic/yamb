@@ -13,6 +13,7 @@ import {
 	type ColumnName,
 } from "../Board/BoardConstants";
 import { chooseCell } from "../Board/choseCell";
+import { RobotAntennasSvg } from "../../Svgs";
 
 export const AIAssistantButton = ({
 	showSettings,
@@ -186,12 +187,11 @@ No extra text, no markdown, no explanations outside JSON.
 
 	return (
 		<button className="relative h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1">
-			<img
-				src="assets/robot-antennas (1).svg"
+			<RobotAntennasSvg
 				onClick={() => {
 					callYambAssistant();
 				}}
-			></img>
+			></RobotAntennasSvg>
 			{showSettings && (
 				<>
 					<textarea

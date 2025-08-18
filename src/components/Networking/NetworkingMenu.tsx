@@ -6,6 +6,7 @@ import { PeerDataContext, TabelaContext } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
 import type { Cell } from "../Board/BoardConstants";
+import { DatabaseSvg, SmartphoneSvg, TrashCanSvg } from "../../Svgs";
 
 // stolen from chatgpt
 function formatDate(date: Date) {
@@ -404,18 +405,18 @@ const PreviousGameFromSave = ({
 					className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
 					onClick={() => loadAvailableSavedGames()}
 				>
-					<img src="assets/database.svg"></img>
+					<DatabaseSvg />
 				</button>
 				<button
 					className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
 					onClick={() => loadGameFromImage()}
 				>
-					<img src="assets/smartphone.svg"></img>
+					<SmartphoneSvg />
 				</button>
 			</div>
 			<div className="justify-baseline flex flex-col items-baseline gap-2">
 				{prevSavedGames.map((game) => (
-					<div className="flex flex-row gap-2 overflow-auto">
+					<div className="flex flex-row gap-2 overflow-auto" key={game.id + "-item"}>
 						<button
 							key={game.id + "-delete"}
 							className="h-[40px] w-[40px] rounded-md border-2 border-red-600 bg-red-900 p-1"
@@ -423,7 +424,7 @@ const PreviousGameFromSave = ({
 								removeGameFromLocalStorage(game);
 							}}
 						>
-							<img src="assets/trash-can.svg"></img>
+							<TrashCanSvg />
 						</button>
 						<button
 							key={game.id}

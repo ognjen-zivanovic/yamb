@@ -11,6 +11,7 @@ import { YambBoard } from "../Board/Board";
 import type { RowName } from "../Board/BoardConstants";
 import { DiceControls } from "../Dice/DiceControls";
 import { useNetworking } from "../../contexts/NetworkingContext";
+import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
@@ -167,7 +168,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 						<div className="mt-6 flex flex-row items-center justify-center gap-6">
 							<div className="mb-2 flex flex-col items-center justify-around gap-4">
 								<button className="relative h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1">
-									<img src="assets/large-paint-brush.svg"></img>
+									<LargePaintBrushSvg />
 									<input
 										type="color"
 										defaultValue="#eb6434"
@@ -187,7 +188,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 												}))
 											}
 										>
-											<img src="assets/interdiction.svg"></img>
+											<InterdictionSvg />
 										</button>
 									</>
 								)}
@@ -198,7 +199,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 											setShowSettings(!showSettings);
 										}}
 									>
-										<img src="assets/cog.svg"></img>
+										<CogSvg />
 									</button>
 								)}
 							</div>

@@ -2,6 +2,15 @@ import { useState, useContext, useEffect } from "react";
 import { StateContext } from "../../contexts/GameContext";
 import { AIAssistantButton } from "./AIAssistantButton";
 import { RowNames } from "../Board/BoardConstants";
+import {
+	DiceSixFacesOneSvg,
+	DiceSixFacesTwoSvg,
+	DiceSixFacesThreeSvg,
+	DiceSixFacesFourSvg,
+	DiceSixFacesFiveSvg,
+	DiceSixFacesSixSvg,
+	RollingDicesSvg,
+} from "../../Svgs";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
@@ -150,36 +159,32 @@ export const DiceControls = ({
 				<div className="f-full rounded-md border-4 border-main-600">
 					<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-500 p-4">
 						{chosenDice.map((num, index) => (
-							<img
+							<div
 								className="rounded-md bg-black"
 								key={index}
-								src={diceImages[num]!}
-								alt={`Dice ${num}`}
-								width={50}
-								height={50}
 								onClick={() => {
 									setChosenDice((prev) => prev.filter((_, i) => i !== index));
 									setNumChosenDice((prev) => prev - 1);
 									setRolledDice((prev) => [...prev, num]);
 								}}
-							/>
+							>
+								{diceImages[num]}
+							</div>
 						))}
 					</div>
 					<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-200 p-4">
 						{rolledDice.map((num, index) => (
-							<img
+							<div
 								className="rounded-md bg-black"
 								key={index}
-								src={diceImages[num]!}
-								alt={`Dice ${num}`}
-								width={50}
-								height={50}
 								onClick={() => {
 									setChosenDice((prev) => [...prev, num]);
 									setNumChosenDice((prev) => prev + 1);
 									setRolledDice((prev) => prev.filter((_, i) => i !== index));
 								}}
-							/>
+							>
+								{diceImages[num]}
+							</div>
 						))}
 					</div>
 				</div>
@@ -192,9 +197,7 @@ export const DiceControls = ({
 						</p>
 					</div>
 					<button onClick={rollDice} className="h-[50px] w-[50px] text-xl font-bold">
-						<img
-							src="assets/rolling-dices.svg"
-							alt="Roll"
+						<RollingDicesSvg
 							width={50}
 							height={50}
 							className="rounded-md border-2 border-main-600 bg-main-900"
@@ -215,10 +218,10 @@ export const DiceControls = ({
 };
 export const diceImages = [
 	null,
-	"assets/dice-six-faces-one.svg",
-	"assets/dice-six-faces-two.svg",
-	"assets/dice-six-faces-three.svg",
-	"assets/dice-six-faces-four.svg",
-	"assets/dice-six-faces-five.svg",
-	"assets/dice-six-faces-six.svg",
+	<DiceSixFacesOneSvg width={50} height={50} />,
+	<DiceSixFacesTwoSvg width={50} height={50} />,
+	<DiceSixFacesThreeSvg width={50} height={50} />,
+	<DiceSixFacesFourSvg width={50} height={50} />,
+	<DiceSixFacesFiveSvg width={50} height={50} />,
+	<DiceSixFacesSixSvg width={50} height={50} />, // maybe inline this into the svg
 ];
