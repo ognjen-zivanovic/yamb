@@ -155,9 +155,9 @@ export const DiceControls = ({
 
 	return (
 		gameState.isMyMove && (
-			<div className="flex flex-row items-center justify-center gap-6">
-				<div className="f-full rounded-md border-4 border-main-600">
-					<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-500 p-4">
+			<div className="flex flex-col items-center justify-center gap-6 sm:w-fit sm:flex-row">
+				<div className="rounded-md border-4 border-main-600">
+					<div className="flex min-h-[102px] w-[532px] flex-wrap gap-4 bg-main-500 p-4 sm:min-h-[82px] sm:w-[412px]">
 						{chosenDice.map((num, index) => (
 							<div
 								className="rounded-md bg-black"
@@ -172,7 +172,7 @@ export const DiceControls = ({
 							</div>
 						))}
 					</div>
-					<div className="flex min-h-[82px] w-[412px] flex-wrap gap-4 bg-main-200 p-4">
+					<div className="flex min-h-[102px] w-[532px] flex-wrap gap-4 bg-main-200 p-4 sm:min-h-[82px] sm:w-[412px]">
 						{rolledDice.map((num, index) => (
 							<div
 								className="rounded-md bg-black"
@@ -188,29 +188,26 @@ export const DiceControls = ({
 						))}
 					</div>
 				</div>
-				<div className="flex flex-col items-center justify-around gap-4">
+				<div className="flex flex-row items-center justify-around gap-4 sm:flex-col">
 					<div className="text-center">
-						<p className="text-xl font-bold">
+						<p className="text-3xl font-bold sm:text-xl">
 							{gameState.roundIndex == 0
 								? ""
 								: "Round " + gameState.roundIndex + "/3"}
 						</p>
 					</div>
-					<button onClick={rollDice} className="h-[50px] w-[50px] text-xl font-bold">
-						<RollingDicesSvg
-							width={50}
-							height={50}
-							className="rounded-md border-2 border-main-600 bg-main-900"
-						/>
-					</button>
-					{/* {gameState.roundIndex > 0 && ( */}
 					<AIAssistantButton
 						showSettings={showSettings}
 						dice={[...chosenDice, ...rolledDice]}
 						keepDice={keepDice}
 						textRef={textRef}
 					/>
-					{/* )} */}
+					<button
+						onClick={rollDice}
+						className="h-[65px] w-[65px] text-xl font-bold sm:h-[50px] sm:w-[50px]"
+					>
+						<RollingDicesSvg className="rounded-md border-2 border-main-600 bg-main-900" />
+					</button>
 				</div>
 			</div>
 		)
@@ -218,10 +215,10 @@ export const DiceControls = ({
 };
 export const diceImages = [
 	null,
-	<DiceSixFacesOneSvg width={50} height={50} />,
-	<DiceSixFacesTwoSvg width={50} height={50} />,
-	<DiceSixFacesThreeSvg width={50} height={50} />,
-	<DiceSixFacesFourSvg width={50} height={50} />,
-	<DiceSixFacesFiveSvg width={50} height={50} />,
-	<DiceSixFacesSixSvg width={50} height={50} />, // maybe inline this into the svg
+	<DiceSixFacesOneSvg className="h-[70px] w-[70px] sm:h-[50px] sm:w-[50px]" />,
+	<DiceSixFacesTwoSvg className="h-[70px] w-[70px] sm:h-[50px] sm:w-[50px]" />,
+	<DiceSixFacesThreeSvg className="h-[70px] w-[70px] sm:h-[50px] sm:w-[50px]" />,
+	<DiceSixFacesFourSvg className="h-[70px] w-[70px] sm:h-[50px] sm:w-[50px]" />,
+	<DiceSixFacesFiveSvg className="h-[70px] w-[70px] sm:h-[50px] sm:w-[50px]" />,
+	<DiceSixFacesSixSvg className="h-[70px] w-[70px] sm:h-[50px] sm:w-[50px]" />, // maybe inline this into the svg
 ];

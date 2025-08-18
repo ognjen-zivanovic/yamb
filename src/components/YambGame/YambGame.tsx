@@ -165,22 +165,22 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 						>
 							☝️🤖
 						</div>
-						<div className="mt-6 flex flex-row items-center justify-center gap-6">
-							<div className="mb-2 flex flex-col items-center justify-around gap-4">
-								<button className="relative h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1">
+						<div className="mt-6 flex flex-col items-center justify-center gap-6 sm:flex-row">
+							<div className="mb-2 flex flex-row items-center justify-around gap-4 sm:flex-col">
+								<button className="relative h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]">
 									<LargePaintBrushSvg />
 									<input
 										type="color"
 										defaultValue="#eb6434"
 										ref={colorPickerRef}
-										className="absolute left-0 top-0 h-12 w-12 opacity-0"
+										className="absolute left-0 top-0 h-16 w-16 opacity-0 sm:h-12 sm:w-12"
 									/>
 								</button>
 
 								{gameState.isMyMove && gameState.roundIndex > 0 && (
 									<>
 										<button
-											className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+											className="h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]"
 											onClick={() =>
 												setGameState((prev) => ({
 													...prev,
@@ -194,7 +194,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 								)}
 								{gameState.roundIndex > 0 && (
 									<button
-										className="h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1"
+										className="h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]"
 										onClick={() => {
 											setShowSettings(!showSettings);
 										}}

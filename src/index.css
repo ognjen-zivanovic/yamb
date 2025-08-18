@@ -11,6 +11,8 @@
 	@media (max-width: 600px) {
 		body {
 			overflow-y: hidden; /* Disables vertical scrolling */
+			height: 100%;
+			position: fixed;
 		}
 	}
 

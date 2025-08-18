@@ -186,7 +186,7 @@ No extra text, no markdown, no explanations outside JSON.
 	};
 
 	return (
-		<button className="relative h-[50px] w-[50px] rounded-md border-2 border-main-600 bg-main-900 p-1">
+		<button className="relative h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]">
 			<RobotAntennasSvg
 				onClick={() => {
 					callYambAssistant();
