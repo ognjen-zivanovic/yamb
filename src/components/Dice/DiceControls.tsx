@@ -21,10 +21,12 @@ export const DiceControls = ({
 	showSettings,
 	textRef,
 	gameId,
+	gptSettingsRef,
 }: {
 	showSettings: boolean;
 	textRef: HTMLDivElement | null;
 	gameId: string;
+	gptSettingsRef: any;
 }) => {
 	//const {
 	//	rolledDice,
@@ -201,6 +203,7 @@ export const DiceControls = ({
 						dice={[...chosenDice, ...rolledDice]}
 						keepDice={keepDice}
 						textRef={textRef}
+						gptSettingsRef={gptSettingsRef}
 					/>
 					<button
 						onClick={rollDice}

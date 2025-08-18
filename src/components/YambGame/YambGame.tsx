@@ -12,6 +12,7 @@ import type { RowName } from "../Board/BoardConstants";
 import { DiceControls } from "../Dice/DiceControls";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
+import { GptSettings } from "../Dice/GptSettings";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
@@ -40,6 +41,8 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const colorPickerRef = useRef<HTMLInputElement>(null);
 	const [textRef, setTextRef] = useState<HTMLDivElement | null>(null);
+
+	const gptSettingsRef = useRef(null);
 
 	const [themeColor, setThemeColor] = useState(dataObj?.color ?? "#50a2ff"); // save maybe
 
@@ -86,10 +89,12 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	//	}
 	useEffect(() => {
 		const updateScale = () => {
+			const zoomLevel = window.visualViewport ? window.visualViewport.scale : 1;
+			if (zoomLevel != 1) return;
+
 			const width = window.innerWidth;
 			let newScale = width >= 600 ? 1.0 : (0.9 * width) / 600;
 			setScale(newScale);
-
 			//setThemeColor(getRandomColor());
 		};
 
@@ -165,6 +170,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 						>
 							☝️🤖
 						</div>
+						<GptSettings ref={gptSettingsRef} />
 						<div className="mt-6 flex flex-col items-center justify-center gap-6 sm:flex-row">
 							<div className="mb-2 flex flex-row items-center justify-around gap-4 sm:flex-col">
 								<button className="relative h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]">
@@ -196,7 +202,10 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 									<button
 										className="h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]"
 										onClick={() => {
-											setShowSettings(!showSettings);
+											if (!gptSettingsRef.current) return;
+											gptSettingsRef.current.setHidden(
+												!gptSettingsRef.current.isHidden
+											);
 										}}
 									>
 										<CogSvg />
@@ -207,6 +216,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 								showSettings={showSettings}
 								textRef={textRef}
 								gameId={gameId}
+								gptSettingsRef={gptSettingsRef}
 							/>
 						</div>
 					</div>
