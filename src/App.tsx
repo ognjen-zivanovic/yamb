@@ -16,7 +16,7 @@ let dataObj = data ? JSON.parse(data) : undefined;
 const App = () => {
 	const [hasStarted, setHasStarted] = useState(gameIdFromUrl ? true : false);
 	const [tabela, setTabela] = useState<Cell[][]>(dataObj?.tabela ?? createDefaultBoard());
-	const [gameId, setGameId] = useState(gameIdFromUrl ? gameIdFromUrl : "");
+	const [gameId, setGameId] = useState(gameIdFromUrl ?? "");
 
 	const [peerData, setPeerData] = useState<PeerData[]>(dataObj?.peerData ?? []);
 

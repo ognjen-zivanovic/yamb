@@ -1,3 +1,4 @@
+import { customAlphabet } from "nanoid";
 import Peer, { type DataConnection, type PeerEvents } from "peerjs";
 import React, {
 	type Dispatch,
@@ -27,6 +28,7 @@ export interface NetworkingContextValue {
 const NetworkingContext = createContext<NetworkingContextValue | undefined>(undefined);
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
+const hostIdFromUrl = urlParams.get("host");
 const data = localStorage.getItem(gameIdFromUrl + "-data");
 let savedGameData = data ? JSON.parse(data) : undefined;
 const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
@@ -38,10 +40,15 @@ if (index != undefined && savedGameData != undefined) {
 	console.log("Next peer id is ", savedNextPeerId);
 }
 
+const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const nanoid = customAlphabet(alphabet, 6);
+
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
-	const [peer] = useState<Peer | null>(savedPeerId ? new Peer(savedPeerId) : new Peer());
+	const [peer] = useState<Peer | null>(
+		savedPeerId ? new Peer(savedPeerId) : hostIdFromUrl ? new Peer() : new Peer(nanoid())
+	);
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
-	const [peerId, setPeerId] = useState(savedPeerId ?? "");
+	const [peerId, setPeerId] = useState("");
 
 	const [nextPeerId, setNextPeerId] = useState(savedNextPeerId ?? "");
 
