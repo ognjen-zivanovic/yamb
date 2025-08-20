@@ -16,13 +16,11 @@ import { chooseCell } from "../Board/choseCell";
 import { RobotAntennasSvg } from "../../Svgs";
 
 export const AIAssistantButton = ({
-	showSettings,
 	dice,
 	keepDice,
 	textRef,
 	gptSettingsRef,
 }: {
-	showSettings: boolean;
 	dice: number[];
 	keepDice: (diceToKeep: number[]) => void;
 	textRef: HTMLDivElement | null;

@@ -7,8 +7,9 @@ export interface GameState {
 	value: number[];
 	najava?: RowName;
 	dirigovana?: RowName;
-	isMyMove: boolean;
 	blackout?: boolean;
+	isRucna?: boolean;
+	isMyMove: boolean;
 }
 
 export interface TabelaState {

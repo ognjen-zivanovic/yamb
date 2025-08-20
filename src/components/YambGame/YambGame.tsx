@@ -12,7 +12,7 @@ import type { RowName } from "../Board/BoardConstants";
 import { DiceControls } from "../Dice/DiceControls";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
-import { GptSettings } from "../Dice/GptSettings";
+import { GptSettings, type GptSettingsHandle } from "../Dice/GptSettings";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
@@ -36,15 +36,13 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	const [scale, setScale] = useState(1);
 	const { tabela, updateTabela } = useContext(TabelaContext);
 
-	const [showSettings, setShowSettings] = useState(false);
-
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const colorPickerRef = useRef<HTMLInputElement>(null);
 	const [textRef, setTextRef] = useState<HTMLDivElement | null>(null);
 
-	const gptSettingsRef = useRef(null);
+	const gptSettingsRef = useRef<GptSettingsHandle>(null);
 
-	const [themeColor, setThemeColor] = useState(dataObj?.color ?? "#50a2ff"); // save maybe
+	const [themeColor, setThemeColor] = useState(dataObj?.color ?? "#50a2ff");
 
 	useEffect(() => {
 		if (peerData.length > 0) {
@@ -213,7 +211,6 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 								)}
 							</div>
 							<DiceControls
-								showSettings={showSettings}
 								textRef={textRef}
 								gameId={gameId}
 								gptSettingsRef={gptSettingsRef}

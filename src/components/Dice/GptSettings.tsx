@@ -1,6 +1,16 @@
 import { forwardRef, useState, useImperativeHandle } from "react";
 
-export const GptSettings = forwardRef((props, ref) => {
+export interface GptSettingsHandle {
+	gptInstruction: string;
+	gptSystem: string;
+	gptModel: string;
+	keepDiceText: string;
+	scoreText: string;
+	isHidden: boolean;
+	setHidden: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export const GptSettings = forwardRef<GptSettingsHandle, {}>((_props, ref) => {
 	const [gptInstruction, setGptInstruction] = useState(`You are a Yamb assistant.
 
 Rules:

@@ -18,12 +18,10 @@ const data = localStorage.getItem(gameIdFromUrl + "-dice");
 const savedGameData = data ? JSON.parse(data) : undefined;
 
 export const DiceControls = ({
-	showSettings,
 	textRef,
 	gameId,
 	gptSettingsRef,
 }: {
-	showSettings: boolean;
 	textRef: HTMLDivElement | null;
 	gameId: string;
 	gptSettingsRef: any;
@@ -127,7 +125,11 @@ export const DiceControls = ({
 
 	const rollDice = () => {
 		if (gameState.roundIndex >= 3) return;
-		setGameState((prev) => ({ ...prev, roundIndex: prev.roundIndex + 1 }));
+		setGameState((prev) => ({
+			...prev,
+			roundIndex: prev.roundIndex + 1,
+			isRucna: numChosenDice === 0,
+		}));
 		setRolledDice([]);
 
 		for (let i = 0; i < 6 - numChosenDice; i++) {
@@ -199,7 +201,6 @@ export const DiceControls = ({
 						</p>
 					</div>
 					<AIAssistantButton
-						showSettings={showSettings}
 						dice={[...chosenDice, ...rolledDice]}
 						keepDice={keepDice}
 						textRef={textRef}

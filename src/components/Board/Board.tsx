@@ -43,7 +43,7 @@ export function isCellActive(
 	let isActive = tabela[rowIndex][colIndex]?.isAvailable && gameState.value[rowIndex] > 0;
 	if (colIndex == ColumnNames.Najava && gameState.najava != rowIndex) isActive = false;
 	if (colIndex == ColumnNames.Dirigovana && gameState.dirigovana != rowIndex) isActive = false;
-	if (colIndex == ColumnNames.Rucna && gameState.roundIndex != 1) isActive = false;
+	if (colIndex == ColumnNames.Rucna && !gameState.isRucna) isActive = false;
 	if (gameState.najava != undefined && colIndex != ColumnNames.Najava) isActive = false;
 	if (gameState.dirigovana != undefined && colIndex != ColumnNames.Dirigovana) isActive = false;
 	if (

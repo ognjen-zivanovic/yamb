@@ -517,7 +517,7 @@ const PeerDataPanel = ({
 						onDragLeave={handleDragLeave}
 						onDrop={(e) => handleDrop(e, index)}
 						onDragEnd={handleDragEnd}
-						className={`p-3 sm:p-4 rounded-lg border cursor-grab transition-colors ${
+						className={`p-2 sm:p-3 rounded-lg border cursor-grab transition-colors ${
 							draggedIndex === index
 								? "bg-gray-200"
 								: dragOverIndex === index
@@ -526,10 +526,24 @@ const PeerDataPanel = ({
 						}`}
 					>
 						<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-							<span className="overflow-hidden text-ellipsis whitespace-nowrap font-medium">
+							<span className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-medium">
 								{p.name || "Unnamed"}
 							</span>
-							<span className="text-nowrap text-xs text-gray-500">({p.id})</span>
+							<span className="text-nowrap text-gray-500">({p.id})</span>
+							<div className="flex flex-1 flex-row justify-end">
+								<button
+									className="h-6 w-6 rounded-md border-2 border-red-600 bg-red-900"
+									onClick={() => {
+										setPeerData((prev) => {
+											const copy = [...prev];
+											copy.splice(index, 1);
+											return copy;
+										});
+									}}
+								>
+									<TrashCanSvg />
+								</button>
+							</div>
 						</div>
 					</li>
 				))}
