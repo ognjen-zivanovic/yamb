@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { StateContext } from "../../contexts/GameContext";
-import { rowHeaders } from "./BoardConstants";
+import { numColumns, rowHeaders } from "./BoardConstants";
 import { type RowName } from "./BoardConstants";
 import { ColumnNames, RowNames } from "./BoardConstants";
 import { type Cell } from "./BoardConstants";
@@ -55,7 +55,7 @@ export const BoardRow = ({
 
 				return (
 					<div
-						key={rowIndex * 12 + colIndex}
+						key={rowIndex * numColumns + colIndex}
 						className={` border-main-500 border-1 h-full w-[calc(8*100%/106)] flex items-center justify-center text-[1.35rem] ${
 							rowIndex === RowNames.Suma1 ||
 							rowIndex === RowNames.Suma2 ||
@@ -100,7 +100,9 @@ export const BoardRow = ({
 			})}
 			<div
 				className={`border-main-500 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center ${
-					rowIndex === 6 || rowIndex === 9 || rowIndex === 15
+					rowIndex === RowNames.Suma1 ||
+					rowIndex === RowNames.Suma2 ||
+					rowIndex === RowNames.Suma3
 						? "bg-main-300 border-t-2 border-b-2"
 						: "bg-white"
 				}`}

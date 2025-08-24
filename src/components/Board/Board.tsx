@@ -14,8 +14,6 @@ export const YambBoard = ({
 }) => {
 	const { broadcastMessage, sendMessageToNextPlayer } = useNetworking();
 
-	useEffect(() => {}, [tabela]); // this shit is probably slow as fuck
-
 	return (
 		<>
 			<div className="flex aspect-[106/118] min-h-0 w-[600px] flex-col overflow-clip rounded-md border-4 border-solid border-main-500">

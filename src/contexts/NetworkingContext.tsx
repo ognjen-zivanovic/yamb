@@ -29,9 +29,9 @@ const NetworkingContext = createContext<NetworkingContextValue | undefined>(unde
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
 const hostIdFromUrl = urlParams.get("host");
-const data = localStorage.getItem(gameIdFromUrl + "-data");
+const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let savedGameData = data ? JSON.parse(data) : undefined;
-const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
+const savedPeerId = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-peerId") : undefined;
 // find index of me
 let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedNextPeerId = undefined;

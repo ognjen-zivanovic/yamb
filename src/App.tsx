@@ -9,7 +9,7 @@ import { TabelaContext, PeerDataContext } from "./contexts/GameContext";
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
 
-const data = localStorage.getItem(gameIdFromUrl + "-data");
+const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let dataObj = data ? JSON.parse(data) : undefined;
 
 // 🦍

@@ -128,6 +128,9 @@ export const rowHeaders = [
 	<div className="text-[2.1rem]">Σ</div>,
 ];
 
+export const numRows = 15;
+export const numColumns = 8; //10;
+
 export const createDefaultBoard = (): Cell[][] => {
 	const tabela: Cell[][] = Array.from({ length: 16 }, () => []);
 
@@ -138,7 +141,7 @@ export const createDefaultBoard = (): Cell[][] => {
 	tabela[RowNames.Jedinice][ColumnNames.OdGoreIDole] = { value: undefined, isAvailable: true };
 	tabela[RowNames.Yamb][ColumnNames.OdGoreIDole] = { value: undefined, isAvailable: true };
 
-	for (let i = 0; i < 15; i++) {
+	for (let i = 0; i < numRows; i++) {
 		if (i === RowNames.Suma1 || i === RowNames.Suma2) continue;
 		tabela[i][ColumnNames.Slobodna] = { value: undefined, isAvailable: true };
 		tabela[i][ColumnNames.Najava] = { value: undefined, isAvailable: true };

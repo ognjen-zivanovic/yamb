@@ -1,12 +1,11 @@
-import { nanoid } from "nanoid";
 import QRCode from "qrcode";
-import { type Dispatch, type SetStateAction, useContext, useState, useEffect } from "react";
+import { type Dispatch, type SetStateAction, useContext, useEffect, useState } from "react";
 import { type PeerData } from "../../App";
 import { PeerDataContext, TabelaContext } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
-import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
-import type { Cell } from "../Board/BoardConstants";
 import { DatabaseSvg, SmartphoneSvg, TrashCanSvg } from "../../Svgs";
+import type { Cell } from "../Board/BoardConstants";
+import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
 
 // stolen from chatgpt
 function formatDate(date: Date) {
@@ -23,9 +22,9 @@ function formatDate(date: Date) {
 }
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
-const data = localStorage.getItem(gameIdFromUrl + "-data");
+const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let savedGameData = data ? JSON.parse(data) : undefined;
-const savedPeerId = localStorage.getItem(gameIdFromUrl + "-peerId");
+const savedPeerId = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-peerId") : undefined;
 let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedName = savedGameData?.peerData[index].name;
 
@@ -95,7 +94,7 @@ export const NetworkingMenu = ({
 		const nextPlayer = peerData[(me + 1) % peerData.length];
 		setNextPeerId(nextPlayer.id);
 
-		let newGameId = nanoid(8);
+		let newGameId = hostId;
 		setGameId(newGameId);
 		broadcastMessage("start-game", newGameId);
 	};
@@ -552,7 +551,6 @@ const PeerDataPanel = ({
 	);
 };
 const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
-	``;
 	const [qrCodeUrl, setQrCodeUrl] = useState("");
 	const [inviteLink, setInviteLink] = useState("");
 

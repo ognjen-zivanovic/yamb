@@ -14,7 +14,7 @@ import {
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
-const data = localStorage.getItem(gameIdFromUrl + "-dice");
+const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-dice") : undefined;
 const savedGameData = data ? JSON.parse(data) : undefined;
 
 export const DiceControls = ({

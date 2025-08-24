@@ -11,6 +11,8 @@ import {
 	type RowName,
 	ColumnNameFromString,
 	type ColumnName,
+	numRows,
+	numColumns,
 } from "../Board/BoardConstants";
 import { chooseCell } from "../Board/choseCell";
 import { RobotAntennasSvg } from "../../Svgs";
@@ -46,8 +48,8 @@ export const AIAssistantButton = ({
 
 		prompt["availableCells"] = [];
 
-		for (let rowIndex = 0; rowIndex < 16; rowIndex++) {
-			for (let colIndex = 0; colIndex < 8; colIndex++) {
+		for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+			for (let colIndex = 0; colIndex < numColumns; colIndex++) {
 				let isActive = isCellActive(tabela, rowIndex, colIndex, gameState);
 				if (!isActive) continue;
 
@@ -88,7 +90,7 @@ export const AIAssistantButton = ({
 			if (!textRef) return;
 			textRef.hidden = false;
 			textRef.style.top = "525px";
-			textRef.innerHTML =
+			textRef.textContent =
 				"🎲 You’ve already made your move! Roll the dice again to continue.";
 			return;
 		}
@@ -133,7 +135,7 @@ export const AIAssistantButton = ({
 				if (result.action === "score") {
 					textRef.style.top = "725px";
 				}
-				textRef.innerHTML = "☝️🤖 " + result.reason;
+				textRef.textContent = "☝️🤖 " + result.reason;
 			}
 			if (result.action === "score") {
 				let rowIndex = RowNameFromString[result.category.row] as RowName;
