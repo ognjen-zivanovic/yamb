@@ -1,4 +1,4 @@
-import { forwardRef, useState, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 
 export interface GptSettingsHandle {
 	gptInstruction: string;

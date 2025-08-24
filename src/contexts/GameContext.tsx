@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, createContext } from "react";
 import type { PeerData } from "../App";
-import type { RowName, Cell } from "../components/Board/BoardConstants";
+import type { Cell, RowName } from "../components/Board/BoardConstants";
 
 export interface GameState {
 	roundIndex: number;

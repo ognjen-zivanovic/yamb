@@ -1,4 +1,4 @@
-import { DownSvg, UpSvg, UpAndDown, FromMiddleSvg, FromSidesSvg } from "../../Svgs";
+import { DownSvg, FromMiddleSvg, FromSidesSvg, UpAndDown, UpSvg } from "../../Svgs";
 
 export interface Cell {
 	value?: number;

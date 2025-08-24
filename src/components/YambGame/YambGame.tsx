@@ -1,17 +1,17 @@
-import { useState, useContext, useRef, useEffect } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
 	type GameState,
 	PeerDataContext,
-	TabelaContext,
 	StateContext,
+	TabelaContext,
 } from "../../contexts/GameContext";
-import { generateTailwindShades } from "../../utils/generateTailwindShades";
+import { useNetworking } from "../../contexts/NetworkingContext";
+import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
 import { encodeTabelaToCanvas } from "../../utils/encodeTabelaToCanvas";
+import { generateTailwindShades } from "../../utils/generateTailwindShades";
 import { YambBoard } from "../Board/Board";
 import type { RowName } from "../Board/BoardConstants";
 import { DiceControls } from "../Dice/DiceControls";
-import { useNetworking } from "../../contexts/NetworkingContext";
-import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
 import { GptSettings, type GptSettingsHandle } from "../Dice/GptSettings";
 
 const urlParams = new URLSearchParams(window.location.search);

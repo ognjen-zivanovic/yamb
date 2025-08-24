@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import type { GameState } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { ColumnNames, type Cell, type RowName } from "./BoardConstants";

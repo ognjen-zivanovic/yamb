@@ -1,21 +1,21 @@
 import OpenAI from "openai";
-import { useState, useContext } from "react";
-import { TabelaContext, StateContext } from "../../contexts/GameContext";
+import { useContext, useState } from "react";
+import { StateContext, TabelaContext } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
+import { RobotAntennasSvg } from "../../Svgs";
 import { isCellActive } from "../Board/Board";
 import {
-	RowNames,
-	ReverseRowNames,
-	ReverseColumnNames,
-	RowNameFromString,
-	type RowName,
 	ColumnNameFromString,
-	type ColumnName,
-	numRows,
 	numColumns,
+	numRows,
+	ReverseColumnNames,
+	ReverseRowNames,
+	RowNameFromString,
+	RowNames,
+	type ColumnName,
+	type RowName,
 } from "../Board/BoardConstants";
 import { chooseCell } from "../Board/choseCell";
-import { RobotAntennasSvg } from "../../Svgs";
 
 export const AIAssistantButton = ({
 	dice,

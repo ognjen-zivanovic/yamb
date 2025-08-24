@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
 	ColumnNames,
-	columnHeaders,
-	type RowName,
-	type Cell,
 	RowNames,
+	columnHeaders,
 	rowHeaders,
+	type Cell,
+	type RowName,
 } from "./BoardConstants";
 
 const ReadonlyHeaderRow = () => {

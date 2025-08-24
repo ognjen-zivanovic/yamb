@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { ColumnNames, createDefaultBoard, RowNames } from "./components/Board/BoardConstants";
-import { type Cell } from "./components/Board/BoardConstants";
-import { useNetworking } from "./contexts/NetworkingContext";
+import {
+	ColumnNames,
+	createDefaultBoard,
+	RowNames,
+	type Cell,
+} from "./components/Board/BoardConstants";
 import { NetworkingMenu } from "./components/Networking/NetworkingMenu";
 import { YambGame } from "./components/YambGame/YambGame";
-import { TabelaContext, PeerDataContext } from "./contexts/GameContext";
+import { PeerDataContext, TabelaContext } from "./contexts/GameContext";
+import { useNetworking } from "./contexts/NetworkingContext";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");

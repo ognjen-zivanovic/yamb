@@ -1,10 +1,14 @@
 import { useContext } from "react";
 import { StateContext } from "../../contexts/GameContext";
-import { numColumns, rowHeaders } from "./BoardConstants";
-import { type RowName } from "./BoardConstants";
-import { ColumnNames, RowNames } from "./BoardConstants";
-import { type Cell } from "./BoardConstants";
 import { isCellActive } from "./Board";
+import {
+	ColumnNames,
+	numColumns,
+	rowHeaders,
+	RowNames,
+	type Cell,
+	type RowName,
+} from "./BoardConstants";
 import { chooseCell } from "./choseCell";
 
 export const BoardRow = ({
