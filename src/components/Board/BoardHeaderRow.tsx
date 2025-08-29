@@ -1,4 +1,4 @@
-import { columnHeaders, ColumnNames } from "./BoardConstants";
+import { columnHeaders, ColumnNames } from "./BoardHelpers";
 
 export const BoardHeaderRow = () => {
 	return (

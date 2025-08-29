@@ -6,7 +6,7 @@ import {
 	rowHeaders,
 	type Cell,
 	type RowName,
-} from "./BoardConstants";
+} from "./BoardHelpers";
 
 const ReadonlyHeaderRow = () => {
 	return (

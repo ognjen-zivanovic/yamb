@@ -10,7 +10,7 @@ import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
 import { encodeTabelaToCanvas } from "../../utils/encodeTabelaToCanvas";
 import { generateTailwindShades } from "../../utils/generateTailwindShades";
 import { YambBoard } from "../Board/Board";
-import type { RowName } from "../Board/BoardConstants";
+import type { RowName } from "../Board/BoardHelpers";
 import { DiceControls } from "../Dice/DiceControls";
 import { GptSettings, type GptSettingsHandle } from "../Dice/GptSettings";
 
@@ -26,6 +26,9 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 			roundIndex: 0,
 			value: [],
 			isMyMove: false,
+			chosenDice: [],
+			rolledDice: [],
+			numChosenDice: 0,
 		}
 	);
 
@@ -168,7 +171,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 							☝️🤖
 						</div>
 						<GptSettings ref={gptSettingsRef} />
-						<div className="mt-6 flex flex-col items-center justify-center gap-6 sm:flex-row">
+						<div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
 							<div className="mb-2 flex flex-row items-center justify-around gap-4 sm:flex-col">
 								<button className="relative h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]">
 									<LargePaintBrushSvg />

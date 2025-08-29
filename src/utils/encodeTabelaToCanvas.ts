@@ -1,5 +1,5 @@
 import type { PeerData } from "../App";
-import type { Cell } from "../components/Board/BoardConstants";
+import type { Cell } from "../components/Board/BoardHelpers";
 import type { GameState } from "../contexts/GameContext";
 
 export function encodeTabelaToCanvas(

@@ -8,7 +8,7 @@ import {
 	RowNames,
 	type Cell,
 	type RowName,
-} from "./BoardConstants";
+} from "./BoardHelpers";
 import { chooseCell } from "./choseCell";
 
 export const BoardRow = ({

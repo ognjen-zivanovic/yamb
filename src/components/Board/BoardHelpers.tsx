@@ -173,3 +173,78 @@ export const createDefaultBoard = (): Cell[][] => {
 
 	return tabela;
 };
+
+export const calculateValues = ({
+	chosenDice,
+	rolledDice,
+	roundNumber,
+}: {
+	chosenDice: number[];
+	rolledDice: number[];
+	roundNumber: number;
+}) => {
+	let newValues: number[] = Array.from({ length: 16 }, () => -1);
+	let numOccurences = Array.from({ length: 7 }, () => 0);
+	let dice = [];
+	for (let i = 0; i < chosenDice.length; i++) {
+		numOccurences[chosenDice[i]]++;
+		dice.push(chosenDice[i]);
+	}
+	for (let i = 0; i < rolledDice.length; i++) {
+		numOccurences[rolledDice[i]]++;
+		dice.push(rolledDice[i]);
+	}
+	if (dice.length == 0) {
+		return [];
+	}
+	for (let i = 0; i < 6; i++) {
+		numOccurences[i] = Math.min(numOccurences[i], 5);
+	}
+	dice.sort();
+	for (let i = 1; i <= 6; i++) {
+		if (numOccurences[i] >= 3) {
+			newValues[RowNames.Triling] = Math.max(newValues[RowNames.Triling], 3 * i + 20);
+		}
+		if (numOccurences[i] >= 4) {
+			newValues[RowNames.Kare] = Math.max(newValues[RowNames.Kare], 4 * i + 40);
+		}
+		if (numOccurences[i] >= 5) {
+			newValues[RowNames.Yamb] = Math.max(newValues[RowNames.Yamb], 5 * i + 50);
+		}
+	}
+	if (
+		numOccurences[2] >= 1 &&
+		numOccurences[3] >= 1 &&
+		numOccurences[4] >= 1 &&
+		numOccurences[5] >= 1 &&
+		(numOccurences[1] >= 1 || numOccurences[6] >= 1)
+	) {
+		newValues[RowNames.Kenta] = Math.max(
+			newValues[RowNames.Kenta],
+			66 - 10 * (roundNumber - 1)
+		);
+	}
+	newValues[RowNames.Jedinice] = Math.max(newValues[RowNames.Jedinice], numOccurences[1] * 1);
+	newValues[RowNames.Dvojke] = Math.max(newValues[RowNames.Dvojke], numOccurences[2] * 2);
+	newValues[RowNames.Trojke] = Math.max(newValues[RowNames.Trojke], numOccurences[3] * 3);
+	newValues[RowNames.Cetvorke] = Math.max(newValues[RowNames.Cetvorke], numOccurences[4] * 4);
+	newValues[RowNames.Petice] = Math.max(newValues[RowNames.Petice], numOccurences[5] * 5);
+	newValues[RowNames.Sestice] = Math.max(newValues[RowNames.Sestice], numOccurences[6] * 6);
+	for (let a = 1; a <= 6; a++) {
+		for (let b = 1; b <= 6; b++) {
+			if (a == b) continue;
+			if (numOccurences[a] >= 3 && numOccurences[b] >= 2) {
+				newValues[RowNames.Ful] = Math.max(newValues[RowNames.Ful], 3 * a + 2 * b + 30);
+			}
+		}
+	}
+	let minSum = 0;
+	let maxSum = 0;
+	for (let i = 0; i < 5; i++) {
+		minSum += dice[i];
+		maxSum += dice[dice.length - 1 - i];
+	}
+	newValues[RowNames.Minimum] = Math.max(newValues[RowNames.Minimum], minSum);
+	newValues[RowNames.Maksimum] = Math.max(newValues[RowNames.Maksimum], maxSum);
+	return newValues;
+};

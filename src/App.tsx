@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	ColumnNames,
 	createDefaultBoard,
 	RowNames,
 	type Cell,
-} from "./components/Board/BoardConstants";
+} from "./components/Board/BoardHelpers";
 import { NetworkingMenu } from "./components/Networking/NetworkingMenu";
 import { YambGame } from "./components/YambGame/YambGame";
 import { PeerDataContext, TabelaContext } from "./contexts/GameContext";
@@ -26,26 +26,29 @@ const App = () => {
 
 	const { connectToAllPeers, registerCallback, registerDataCallback } = useNetworking();
 
-	const onReceivePeerData = (incoming: boolean, _conn: any, data: any) => {
-		if (!incoming) {
-			console.log(`Received peer data: ${data.data}`);
-			const peers = data.data.map((p: any) => p.id);
-			console.log("Peers: ", peers);
-			if (peers.length) connectToAllPeers(peers);
-			setPeerData(data.data);
-		}
-	};
+	const onReceivePeerData = useCallback(
+		(incoming: boolean, _conn: any, data: any) => {
+			if (!incoming) {
+				console.log(`Received peer data: ${data.data}`);
+				const peers = data.data.map((p: any) => p.id);
+				console.log("Peers: ", peers);
+				if (peers.length) connectToAllPeers(peers);
+				setPeerData(data.data);
+			}
+		},
+		[connectToAllPeers]
+	);
 
-	const onReceiveName = (incoming: boolean, conn: any, data: any) => {
+	const onReceiveName = useCallback((incoming: boolean, conn: any, data: any) => {
 		if (incoming) {
 			//console.log(`Received name. ${conn.peer} is named: ${data.name}`);
 			setPeerData((prev) =>
 				prev.map((p) => (p.id === conn.peer ? { ...p, name: data.name } : p))
 			);
 		}
-	};
+	}, []);
 
-	const onReceiveMove = (_incoming: boolean, conn: any, data: any) => {
+	const onReceiveMove = useCallback((_incoming: boolean, conn: any, data: any) => {
 		setPeerData((prev) =>
 			prev.map((p) =>
 				p.id === conn.peer && p.tabela == undefined
@@ -74,20 +77,13 @@ const App = () => {
 					: p
 			);
 		});
-	};
+	}, []);
 
 	useEffect(() => {
 		registerCallback("open", (id) => {
 			if (peerData.length == 0) {
 				setPeerData([{ id, name: "", index: 0 }]);
 			}
-
-			console.log("CALLING OPEN");
-			console.log("MY ID IS: ", id);
-			console.log(
-				"PEER DATA IS: ",
-				peerData.map((p) => p.id)
-			);
 			connectToAllPeers(peerData.map((p) => p.id));
 		});
 
@@ -108,7 +104,7 @@ const App = () => {
 
 	const [hostId, setHostId] = useState("");
 
-	const updateTabela = (row: number, col: number, value: Cell) => {
+	const updateTabela = useCallback((row: number, col: number, value: Cell) => {
 		setTabela((prev) => {
 			const copy = prev.map((row) => [...row]);
 			copy[row][col] = value;
@@ -177,7 +173,7 @@ const App = () => {
 
 			return copy;
 		});
-	};
+	}, []);
 
 	useEffect(() => {
 		const urlParams = new URLSearchParams(window.location.search);
@@ -210,10 +206,17 @@ const App = () => {
 		}
 	}, [gameId]);
 
+	// ✅ memoize context values to avoid re-renders
+	const tabelaContextValue = useMemo(
+		() => ({ tabela, setTabela, updateTabela }),
+		[tabela, updateTabela]
+	);
+	const peerDataContextValue = useMemo(() => ({ peerData, setPeerData }), [peerData]);
+
 	return (
 		<div>
-			<TabelaContext.Provider value={{ tabela, setTabela, updateTabela }}>
-				<PeerDataContext.Provider value={{ peerData, setPeerData }}>
+			<TabelaContext.Provider value={tabelaContextValue}>
+				<PeerDataContext.Provider value={peerDataContextValue}>
 					{!hasStarted ? (
 						<NetworkingMenu
 							setHasStarted={setHasStarted}

@@ -14,7 +14,7 @@ import {
 	RowNames,
 	type ColumnName,
 	type RowName,
-} from "../Board/BoardConstants";
+} from "../Board/BoardHelpers";
 import { chooseCell } from "../Board/choseCell";
 
 export const AIAssistantButton = ({

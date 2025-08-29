@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { GameState } from "../../contexts/GameContext";
-import { ColumnNames, RowNames, type Cell } from "./BoardConstants";
+import { ColumnNames, RowNames, type Cell } from "./BoardHelpers";
 import Globals from "../../globals";
 
 export const chooseCell = ({

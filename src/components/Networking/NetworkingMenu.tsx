@@ -9,7 +9,7 @@ import {
 	ReverseRowNames,
 	RowNameFromNumber,
 	type Cell,
-} from "../Board/BoardConstants";
+} from "../Board/BoardHelpers";
 import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
 import { type GameState } from "../../contexts/GameContext";
 import Globals from "../../globals";
