@@ -102,7 +102,7 @@ export const ReadonlyYambBoard = ({ tabela }: { tabela: Cell[][] }) => {
 	return (
 		<>
 			<div
-				className="flex aspect-[106/118] min-h-0 w-[600px] flex-col justify-self-center overflow-clip rounded-md border-4 border-solid border-main-500"
+				className="flex aspect-[106/118] min-h-0 w-[600px] flex-col overflow-clip rounded-md border-4 border-solid border-main-500"
 				style={{ transform: `scale(${scale * 0.9})`, transformOrigin: "top" }}
 			>
 				<ReadonlyHeaderRow />

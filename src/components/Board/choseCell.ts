@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { GameState } from "../../contexts/GameContext";
 import { ColumnNames, RowNames, type Cell } from "./BoardConstants";
+import Globals from "../../globals";
 
 export const chooseCell = ({
 	rowIndex,
@@ -38,7 +39,14 @@ export const chooseCell = ({
 	if (!gameState.blackout) {
 		SetNewAvailable(tabela, updateTabela, rowIndex, colIndex);
 	}
-	setGameState({ value: [], roundIndex: 0, isMyMove: false });
+	setGameState({
+		value: [],
+		roundIndex: 0,
+		isMyMove: Globals.isSolo ?? false,
+		chosenDice: [],
+		rolledDice: [],
+		numChosenDice: 0,
+	});
 	sendMessageToNextPlayer("next-player", {});
 	broadcastMessage("move", { rowIndex, colIndex, value: newValue });
 };

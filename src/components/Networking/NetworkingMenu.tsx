@@ -4,8 +4,15 @@ import { type PeerData } from "../../App";
 import { PeerDataContext, TabelaContext } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { DatabaseSvg, SmartphoneSvg, TrashCanSvg } from "../../Svgs";
-import type { Cell } from "../Board/BoardConstants";
+import {
+	createDefaultBoard,
+	ReverseRowNames,
+	RowNameFromNumber,
+	type Cell,
+} from "../Board/BoardConstants";
 import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
+import { type GameState } from "../../contexts/GameContext";
+import Globals from "../../globals";
 
 // stolen from chatgpt
 function formatDate(date: Date) {
@@ -24,7 +31,9 @@ const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
 const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let savedGameData = data ? JSON.parse(data) : undefined;
+console.log(gameIdFromUrl);
 const savedPeerId = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-peerId") : undefined;
+console.log(savedPeerId);
 let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedName = savedGameData?.peerData[index].name;
 
@@ -122,81 +131,90 @@ export const NetworkingMenu = ({
 	return (
 		<div className="flex min-h-screen justify-center bg-gray-50">
 			<div className="mx-auto w-full max-w-2xl p-3 sm:p-6">
-				<div className="rounded-lg bg-white p-4 shadow-lg sm:p-8">
-					<p className="mb-2 text-base text-gray-400 sm:text-lg">
+				<div className="flex flex-col items-center rounded-lg bg-white p-4 shadow-lg sm:p-8">
+					<p className="mb-2 w-full text-base text-gray-400 sm:text-lg">
 						<strong>Your ID:</strong> {peerId}
 					</p>
 					{!hasJoinedHost && (
 						<>
-							<div>
-								{!isHost ? (
-									<div className="flex flex-col gap-4 sm:gap-6">
-										<div className="flex flex-col gap-3 sm:flex-row">
-											<input
-												placeholder="Host ID"
-												value={hostId}
-												onChange={(e) => setHostId(e.target.value)}
-												className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
-											/>
-											<button
-												onClick={joinHost}
-												disabled={!name.trim() || !hostId.trim()}
-												className="rounded-md bg-main-600 px-4 py-2 text-white transition-colors hover:bg-main-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
-											>
-												Join
-											</button>
-										</div>
-										{!hostId && (
-											<button
-												onClick={startHost}
-												className="rounded-md bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
-												disabled={!name.trim()}
-											>
-												Become Host
-											</button>
-										)}
-										{
-											<div className="flex flex-col gap-3">
-												<div className="flex flex-row gap-3">
-													<input
-														placeholder="Your name"
-														value={name}
-														onChange={(e) => {
-															const newName = e.target.value;
-															setName(newName);
-															if (newName.startsWith("sk-")) {
-																localStorage.setItem(
-																	"openai-key",
-																	newName
-																);
-															}
-														}}
-														className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
-													/>
-												</div>
-											</div>
-										}
-									</div>
-								) : (
-									<div className="flex flex-col gap-4 sm:gap-6">
-										<InviteLinkPanel peerId={peerId} />
+							{!isHost ? (
+								<div className="flex w-full flex-col gap-4 sm:gap-6">
+									<div className="flex flex-col gap-3 sm:flex-row">
+										<input
+											placeholder="Host ID"
+											value={hostId}
+											onChange={(e) => setHostId(e.target.value)}
+											className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
+										/>
 										<button
-											onClick={startGame}
-											className="rounded-md bg-purple-500 px-4 py-2 text-white transition-colors hover:bg-purple-600 sm:px-6"
+											onClick={joinHost}
+											disabled={!name.trim() || !hostId.trim()}
+											className="rounded-md bg-main-600 px-4 py-2 text-white transition-colors hover:bg-main-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 										>
-											Start game!
+											Join
 										</button>
 									</div>
-								)}
-							</div>
-							<hr className="my-2" />
+									{!hostId && (
+										<button
+											onClick={startHost}
+											className="rounded-md bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+											disabled={!name.trim()}
+										>
+											Become Host
+										</button>
+									)}
+									{
+										<div className="flex flex-col gap-3">
+											<div className="flex flex-row gap-3">
+												<input
+													placeholder="Your name"
+													value={name}
+													onChange={(e) => {
+														const newName = e.target.value;
+														setName(newName);
+														if (newName.startsWith("sk-")) {
+															localStorage.setItem(
+																"openai-key",
+																newName
+															);
+														}
+													}}
+													className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
+												/>
+											</div>
+										</div>
+									}
+									<div>
+										<button
+											onClick={() => {
+												Globals.isSolo = true;
+											}}
+											className="rounded-md bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+											disabled={!name.trim()}
+										>
+											Solo
+										</button>
+									</div>
+								</div>
+							) : (
+								<div className="flex w-full flex-col gap-4 sm:gap-6">
+									<InviteLinkPanel peerId={peerId} />
+									<button
+										onClick={startGame}
+										className="rounded-md bg-purple-500 px-4 py-2 text-white transition-colors hover:bg-purple-600 sm:px-6"
+									>
+										Start game!
+									</button>
+								</div>
+							)}
+							<hr className="my-2 w-full" />
 							{isHost && (
 								<PeerDataPanel peerData={peerData} setPeerData={setPeerData} />
 							)}
 						</>
 					)}
 					{!isSaveLoaded && (
-						<div className="justify-self-center">
+						<>
 							{(hasJoinedHost || isHost) && (
 								<PreviousGameFromSave
 									setTabela={setTabela}
@@ -204,7 +222,7 @@ export const NetworkingMenu = ({
 									setIsSaveLoaded={setIsSaveLoaded}
 								/>
 							)}
-						</div>
+						</>
 					)}
 
 					{isSaveLoaded && <ReadonlyYambBoard tabela={tabela} />}
@@ -218,10 +236,12 @@ const PreviousGameFromSave = ({
 	setTabela,
 	updateTabela,
 	setIsSaveLoaded,
+	isDry = false,
 }: {
 	setTabela: Dispatch<SetStateAction<Cell[][]>>;
 	updateTabela: (rowIndex: number, colIndex: number, value: Cell) => void;
 	setIsSaveLoaded: (isSaveLoaded: boolean) => void;
+	isDry?: boolean;
 }) => {
 	const [prevSavedGames, setPrevSavedGames] = useState<SavedGame[]>([]);
 
@@ -276,9 +296,13 @@ const PreviousGameFromSave = ({
 	};
 
 	const loadGameFromLocalStorage = (game: SavedGame) => {
-		const savedGameData = JSON.parse(localStorage.getItem(game.id + "-data")!).tabela;
-		setTabela(savedGameData);
-		setIsSaveLoaded(true);
+		if (isDry) {
+			const savedGameData = JSON.parse(localStorage.getItem(game.id + "-data")!).tabela;
+			setTabela(savedGameData);
+			setIsSaveLoaded(true);
+		} else {
+			window.location.href = "/?game=" + game.id;
+		}
 	};
 
 	const loadGameFromImage = () => {
@@ -318,6 +342,13 @@ const PreviousGameFromSave = ({
 					// console.log(`Image dimensions: ${img.width}x${img.height}`);
 					let start = -1;
 					let startCnt = 0;
+					let gameState: GameState = {
+						roundIndex: 0,
+						isMyMove: false,
+						value: [],
+					};
+
+					let peerDataLoaded: PeerData[] = [];
 
 					const isPixelString = (i: number, s: string) => {
 						if (s.length != 3 || i < 0 || i >= pixels.length) return false;
@@ -329,7 +360,7 @@ const PreviousGameFromSave = ({
 
 					for (let i = 0; i < pixels.length; i += 4) {
 						if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
-							//console.log("Found O G N J E N");
+							console.log("Found O G N J E N");
 							start = i;
 							startCnt++;
 						}
@@ -339,11 +370,14 @@ const PreviousGameFromSave = ({
 					if (start != -1) {
 						let rows = pixels[start + 0];
 						let cols = pixels[start + 1];
+						let time =
+							(pixels[start + 2] << 24) |
+							(pixels[start + w + 0] << 16) |
+							(pixels[start + w + 1] << 8) |
+							pixels[start + w + 2];
 						let totalCells = rows * cols;
 
-						console.log("Decoded: ", rows, cols, totalCells);
-
-						start += w;
+						start += 2 * w;
 
 						const RColor = pixels[start + 0];
 						const GColor = pixels[start + 1];
@@ -352,6 +386,62 @@ const PreviousGameFromSave = ({
 						console.log("Color: ", RColor, GColor, BColor, AColor);
 
 						start += w;
+
+						gameState.isMyMove = (pixels[start + 0] & (1 << 7)) != 0;
+						gameState.isRucna = (pixels[start + 0] & (1 << 6)) != 0;
+						gameState.roundIndex = pixels[start + 0] & 0b00111111;
+
+						let najavaNum = (pixels[start + 1] & 0xf0) >> 4;
+						let dirigovanaNum = pixels[start + 1] & 0xf;
+						gameState.najava =
+							najavaNum == 15 ? undefined : RowNameFromNumber[najavaNum];
+						gameState.dirigovana =
+							dirigovanaNum == 15 ? undefined : RowNameFromNumber[dirigovanaNum];
+
+						let numPeers = pixels[start + 2];
+						console.log("NUM PEERS", numPeers);
+
+						start += w;
+						const chosenDice: number[] = [];
+						const rolledDice: number[] = [];
+						for (let i = 0; i < 3; i++) {
+							const subpixel = pixels[start + i];
+							const a = (subpixel >> 4) & 0b1111;
+							const b = subpixel & 0b1111;
+							function addDice(isChosen: boolean, value: number) {
+								if (isChosen) {
+									chosenDice.push(value);
+								} else {
+									rolledDice.push(value);
+								}
+							}
+
+							// if zero dont add, TODO
+							if (a != 0) addDice((a & 0b1000) != 0, a & 0b111);
+							if (b != 0) addDice((b & 0b1000) != 0, b & 0b111);
+						}
+
+						start += w;
+						let gameId =
+							pixels[start + 0].toString(16) +
+							pixels[start + 1].toString(16) +
+							pixels[start + 2].toString(16);
+
+						start += w;
+						let peerId =
+							pixels[start + 0].toString(16) +
+							pixels[start + 1].toString(16) +
+							pixels[start + 2].toString(16);
+
+						for (let i = 0; i < numPeers; i++) {
+							start += w;
+							let id =
+								pixels[start + 0].toString(16) +
+								pixels[start + 1].toString(16) +
+								pixels[start + 2].toString(16);
+							console.log("BANDZAAA: ", id);
+							peerDataLoaded.push({ id, name: "", index: i });
+						}
 
 						for (let r = 0; r < rows; r++) {
 							for (let c = 0; c < cols; c++) {
@@ -383,6 +473,49 @@ const PreviousGameFromSave = ({
 									});
 								}
 							}
+						}
+						if (!isDry) {
+							console.log(
+								"Decoded: ",
+								rows,
+								cols,
+								totalCells,
+								gameState,
+								peerDataLoaded,
+								peerId,
+								time
+							);
+
+							if (chosenDice.length != 0) gameState.chosenDice = chosenDice;
+							if (rolledDice.length != 0) gameState.rolledDice = rolledDice;
+							if (chosenDice.length != 0) gameState.numChosenDice = chosenDice.length;
+
+							setTabela((prev) => {
+								// is there a smarter way to do this?
+								// maybe a ref or something but that seems overkill
+								const tabela = prev;
+								const data: any = {};
+								data.peerData = peerDataLoaded;
+								data.peerData = data.peerData.map((p: any) =>
+									p.id === peerId ? { ...p, tabela } : p
+								);
+								data.tabela = tabela;
+								data.peerId = peerId;
+								data.gameState = gameState;
+								data.color =
+									"#" +
+									RColor.toString(16) +
+									GColor.toString(16) +
+									BColor.toString(16);
+								data.date = time;
+
+								localStorage.setItem(gameId + "-data", JSON.stringify(data));
+
+								localStorage.setItem(gameId + "-peerId", peerId);
+
+								//window.location.href = "/?game=" + gameId;
+								return prev;
+							});
 						}
 					}
 					setIsSaveLoaded(true);
@@ -504,7 +637,7 @@ const PeerDataPanel = ({
 		setDragOverIndex(null);
 	};
 	return (
-		<div className="mb-4 mt-4 rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:mt-6 sm:p-6">
+		<div className="mb-4 mt-4 w-full rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:mt-6 sm:p-6">
 			<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Peer Data</h3>
 			<ul className="space-y-3">
 				{peerData.map((p, index) => (
@@ -524,7 +657,7 @@ const PeerDataPanel = ({
 								: "border-gray-300 bg-white hover:bg-gray-50"
 						}`}
 					>
-						<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+						<div className="flex flex-row items-center gap-1 sm:gap-2">
 							<span className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-medium">
 								{p.name || "Unnamed"}
 							</span>
@@ -572,12 +705,12 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 
 	return (
 		inviteLink && (
-			<div className="rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
-				<div className="mb-4 flex flex-col gap-3 sm:flex-row">
+			<div className="flex flex-col items-center rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
+				<div className="mb-4 flex w-full flex-col gap-3 sm:flex-row">
 					<input
 						value={inviteLink}
 						readOnly
-						className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+						className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
 					/>
 					<button
 						onClick={() => navigator.clipboard.writeText(inviteLink)}
@@ -588,14 +721,19 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 				</div>
 
 				{qrCodeUrl && (
-					<div className="flex flex-col items-center">
-						<img
-							src={qrCodeUrl}
-							alt="QR Code"
-							className="max-w-full rounded-md border border-gray-300"
-						/>
-					</div>
+					<img
+						src={qrCodeUrl}
+						alt="QR Code"
+						className="max-w-full rounded-md border border-gray-300"
+					/>
 				)}
+
+				<div
+					className="mt-4 rounded-xl border-2 bg-white p-2 font-mono text-3xl font-bold tracking-wide text-black"
+					style={{ borderColor: "#" + peerId }}
+				>
+					{peerId}
+				</div>
 			</div>
 		)
 	);

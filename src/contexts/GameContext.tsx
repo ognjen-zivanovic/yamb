@@ -10,6 +10,10 @@ export interface GameState {
 	blackout?: boolean;
 	isRucna?: boolean;
 	isMyMove: boolean;
+
+	chosenDice?: number[];
+	rolledDice?: number[];
+	numChosenDice?: number;
 }
 
 export interface TabelaState {

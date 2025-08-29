@@ -51,9 +51,10 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	}, []);
 
 	useEffect(() => {
+		console.log("MY BAD 2");
 		let data: any = {};
 
-		data.peerData = peerData;
+		data.peerData = [...peerData];
 		data.peerData = data.peerData.map((p: any) => (p.id === peerId ? { ...p, tabela } : p));
 		data.tabela = tabela;
 		data.peerId = peerId;
@@ -103,22 +104,20 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 
 	useEffect(() => {
 		try {
-			encodeTabelaToCanvas(tabela, canvasRef, themeColor);
-
-			// 4) Save as PNG
-			//let thing = buttonRef.current!;
-			//thing.onclick = () => {
-			//	let canvas = canvasRef.current!;
-			//	var imageURL = canvas.toDataURL("image/png");
-			//	var link = document.createElement("a");
-			//	link.href = imageURL;
-			//	link.download = "tabela.png";
-			//	link.click();
-			//};
+			console.log(tabela, themeColor, gameState);
+			encodeTabelaToCanvas(
+				tabela,
+				gameState,
+				peerData,
+				peerId,
+				gameId,
+				themeColor,
+				canvasRef
+			);
 		} catch (err) {
 			console.error("Failed to export tabela image:", err);
 		}
-	}, [tabela, themeColor]);
+	}, [tabela, themeColor, gameState]);
 
 	useEffect(() => {
 		const el = colorPickerRef.current;

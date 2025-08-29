@@ -11,11 +11,7 @@ import {
 } from "../../Svgs";
 import { RowNames } from "../Board/BoardConstants";
 import { AIAssistantButton } from "./AIAssistantButton";
-
-const urlParams = new URLSearchParams(window.location.search);
-const gameIdFromUrl = urlParams.get("game");
-const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-dice") : undefined;
-const savedGameData = data ? JSON.parse(data) : undefined;
+import Globals from "../../globals";
 
 export const DiceControls = ({
 	textRef,
@@ -34,20 +30,26 @@ export const DiceControls = ({
 	//	setChosenDice,
 	//	setNumChosenDice,
 	//} = useContext(DiceContext);
-	const [rolledDice, setRolledDice] = useState<number[]>(savedGameData?.rolledDice ?? []);
-	const [chosenDice, setChosenDice] = useState<number[]>(savedGameData?.chosenDice ?? []);
-	const [numChosenDice, setNumChosenDice] = useState<number>(savedGameData?.numChosenDice ?? 0);
 
 	const { gameState, setGameState } = useContext(StateContext);
-	useEffect(() => {
-		if (gameState.roundIndex == 0 && !gameState.isMyMove) {
-			setNumChosenDice(0);
-			setChosenDice([]);
-			setRolledDice([]);
-		}
-	}, [gameState.roundIndex]);
+	const chosenDice = gameState.chosenDice ?? [];
+	const rolledDice = gameState.rolledDice ?? [];
+	const numChosenDice = gameState.numChosenDice ?? 0;
+
+	// useEffect(() => {
+	// 	if (gameState.roundIndex == 0 && (!gameState.isMyMove || Globals.isSolo)) {
+	// 		console.log("MY BAD 1");
+	// 		setGameState((prev) => ({
+	// 			...prev,
+	// 			chosenDice: [],
+	// 			rolledDice: [],
+	// 			numChosenDice: 0,
+	// 		}));
+	// 	}
+	// }, [gameState.roundIndex]);
 
 	useEffect(() => {
+		console.log("MY BAD 3", chosenDice, gameState.chosenDice);
 		let newValues: number[] = Array.from({ length: 16 }, () => -1);
 		let numOccurences = Array.from({ length: 7 }, () => 0);
 		let dice = [];
@@ -114,7 +116,7 @@ export const DiceControls = ({
 		newValues[RowNames.Maksimum] = Math.max(newValues[RowNames.Maksimum], maxSum);
 		setGameState((prev) => ({ ...prev, value: newValues }));
 		//console.log(newValues);
-	}, [rolledDice]); //TODO: fix this make this faster
+	}, [gameState.rolledDice]); //TODO: fix this make this faster
 
 	useEffect(() => {
 		localStorage.setItem(
@@ -125,36 +127,44 @@ export const DiceControls = ({
 
 	const rollDice = () => {
 		if (gameState.roundIndex >= 3) return;
-		setGameState((prev) => ({
-			...prev,
-			roundIndex: prev.roundIndex + 1,
-			isRucna: numChosenDice === 0,
-		}));
-		setRolledDice([]);
 
-		for (let i = 0; i < 6 - numChosenDice; i++) {
-			const rolledNumber = Math.ceil(Math.random() * 6);
-			setRolledDice((prev) => [...prev, rolledNumber]);
-		}
+		setGameState((prev) => {
+			const nextRoundIndex = prev.roundIndex + 1;
+			const isRucna = numChosenDice === 0;
+			const rolledDice: number[] = [];
+
+			for (let i = 0; i < 6 - numChosenDice; i++) {
+				const rolledNumber = Math.ceil(Math.random() * 6);
+				rolledDice.push(rolledNumber);
+			}
+
+			return {
+				...prev,
+				roundIndex: nextRoundIndex,
+				isRucna,
+				rolledDice,
+			};
+		});
 	};
 
 	const keepDice = (diceToKeep: number[]) => {
-		setRolledDice((prev) => [...chosenDice, ...prev]);
-		setChosenDice([]);
-		for (let i = 0; i < diceToKeep.length; i++) {
-			const diceValue = diceToKeep[i];
-			setChosenDice((prev) => {
-				return [...prev, diceValue];
-			});
+		setGameState((prev) => {
+			const newChosenDice = [];
+			const newRolledDice = [...prev.rolledDice!!, ...prev.chosenDice!!];
 
-			setRolledDice((prev) => {
-				let copy = [...prev];
-				const index = copy.indexOf(diceValue);
-				copy.splice(index, 1);
-				return copy;
-			});
-		}
-		setNumChosenDice(diceToKeep.length);
+			for (const diceValue of diceToKeep) {
+				newChosenDice.push(diceValue);
+				const index = newRolledDice.indexOf(diceValue);
+				if (index !== -1) newRolledDice.splice(index, 1);
+			}
+
+			return {
+				...prev,
+				chosenDice: newChosenDice,
+				rolledDice: newRolledDice,
+				numChosenDice: newChosenDice.length,
+			};
+		});
 	};
 
 	return (
@@ -167,9 +177,12 @@ export const DiceControls = ({
 								className="rounded-md bg-black"
 								key={index}
 								onClick={() => {
-									setChosenDice((prev) => prev.filter((_, i) => i !== index));
-									setNumChosenDice((prev) => prev - 1);
-									setRolledDice((prev) => [...prev, num]);
+									setGameState((prev) => ({
+										...prev,
+										chosenDice: prev.chosenDice!!.filter((_, i) => i !== index),
+										numChosenDice: prev.numChosenDice!! - 1,
+										rolledDice: [...prev.rolledDice!!, num],
+									}));
 								}}
 							>
 								{diceImages[num]}
@@ -182,9 +195,12 @@ export const DiceControls = ({
 								className="rounded-md bg-black"
 								key={index}
 								onClick={() => {
-									setChosenDice((prev) => [...prev, num]);
-									setNumChosenDice((prev) => prev + 1);
-									setRolledDice((prev) => prev.filter((_, i) => i !== index));
+									setGameState((prev) => ({
+										...prev,
+										chosenDice: [...prev.chosenDice!!, num],
+										numChosenDice: prev.numChosenDice!! + 1,
+										rolledDice: prev.rolledDice!!.filter((_, i) => i !== index),
+									}));
 								}}
 							>
 								{diceImages[num]}

@@ -94,6 +94,26 @@ export const ColumnNameFromString: Record<string, ColumnName> = {
 	OdSredine: ColumnNames.OdSredine,
 	OdGoreIDole: ColumnNames.OdGoreIDole,
 };
+
+export const RowNameFromNumber: Record<number, RowName> = {
+	0: RowNames.Jedinice,
+	1: RowNames.Dvojke,
+	2: RowNames.Trojke,
+	3: RowNames.Cetvorke,
+	4: RowNames.Petice,
+	5: RowNames.Sestice,
+	6: RowNames.Suma1,
+	7: RowNames.Maksimum,
+	8: RowNames.Minimum,
+	9: RowNames.Suma2,
+	10: RowNames.Kenta,
+	11: RowNames.Triling,
+	12: RowNames.Ful,
+	13: RowNames.Kare,
+	14: RowNames.Yamb,
+	15: RowNames.Suma3,
+};
+
 export type RowName = (typeof RowNames)[keyof typeof RowNames];
 export type ColumnName = (typeof ColumnNames)[keyof typeof ColumnNames];
 export const columnHeaders = [
@@ -122,7 +142,7 @@ export const rowHeaders = [
 	<div className="text-[2.1rem]">Σ</div>,
 	<div className="text-[1.2rem]">KENTA</div>,
 	<div className="text-[1.0rem]">TRILING</div>,
-	<div>FUL</div>,
+	<div className="text-[1.35rem]">FUL</div>,
 	<div className="text-[1.35rem]">KARE</div>,
 	<div className="text-[1.35rem]">YAMB</div>,
 	<div className="text-[2.1rem]">Σ</div>,

@@ -40,15 +40,14 @@ if (index != undefined && savedGameData != undefined) {
 	console.log("Next peer id is ", savedNextPeerId);
 }
 
-const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const alphabet = "ABCDEF0123456789";
 const nanoid = customAlphabet(alphabet, 6);
+const defaultPeerId = savedPeerId ?? nanoid();
 
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
-	const [peer] = useState<Peer | null>(
-		savedPeerId ? new Peer(savedPeerId) : hostIdFromUrl ? new Peer() : new Peer(nanoid())
-	);
+	const [peer] = useState<Peer | null>(defaultPeerId ? new Peer(defaultPeerId) : new Peer());
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
-	const [peerId, setPeerId] = useState("");
+	const [peerId, setPeerId] = useState(defaultPeerId ?? "");
 
 	const [nextPeerId, setNextPeerId] = useState(savedNextPeerId ?? "");
 
@@ -73,6 +72,10 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 			peer.destroy();
 		};
 	}, []);
+
+	useEffect(() => {
+		console.log(connections);
+	}, [connections]);
 
 	const connectToPeer = (id: string) => {
 		if (!peer) return;
