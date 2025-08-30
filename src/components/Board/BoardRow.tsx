@@ -1,16 +1,8 @@
-import { memo, useContext } from "react";
-import { StateContext, TabelaContext, type GameState } from "../../contexts/GameContext";
+import { useContext } from "react";
+import { StateContext, TabelaContext } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { isCellActive } from "./Board";
-import {
-	ColumnNames,
-	numColumns,
-	rowHeaders,
-	RowNames,
-	type Cell,
-	type ColumnName,
-	type RowName,
-} from "./BoardHelpers";
+import { ColumnNames, numColumns, rowHeaders, RowNames, type RowName } from "./BoardHelpers";
 import { chooseCell } from "./choseCell";
 
 export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
@@ -22,7 +14,7 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 		<div className="h-row-7 flex flex-row">
 			<div
 				className={`bg-white border-main-500 border-1 h-full w-col-12 text-center align-middle flex items-center justify-center
-				
+
 			${
 				rowIndex === RowNames.Suma1 ||
 				rowIndex === RowNames.Suma2 ||
