@@ -37,7 +37,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	const { peerId, registerDataCallback } = useNetworking();
 
 	const [scale, setScale] = useState(1);
-	const { tabela, updateTabela } = useContext(TabelaContext);
+	const { tabela } = useContext(TabelaContext);
 
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const colorPickerRef = useRef<HTMLInputElement>(null);

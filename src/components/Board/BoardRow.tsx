@@ -1,16 +1,9 @@
 import { useContext } from "react";
 import { StateContext, TabelaContext } from "../../contexts/GameContext";
-import { isCellActive } from "./Board";
-import {
-	ColumnNames,
-	numColumns,
-	rowHeaders,
-	RowNames,
-	type Cell,
-	type RowName,
-} from "./BoardHelpers";
-import { chooseCell } from "./choseCell";
 import { useNetworking } from "../../contexts/NetworkingContext";
+import { isCellActive } from "./Board";
+import { ColumnNames, numColumns, rowHeaders, RowNames, type RowName } from "./BoardHelpers";
+import { chooseCell } from "./choseCell";
 
 export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 	const { gameState, setGameState } = useContext(StateContext);

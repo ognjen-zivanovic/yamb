@@ -1,7 +1,6 @@
 import type { GameState } from "../../contexts/GameContext";
-import { useNetworking } from "../../contexts/NetworkingContext";
-import { ColumnNames, type Cell, type RowName } from "./BoardHelpers";
 import { BoardHeaderRow } from "./BoardHeaderRow";
+import { ColumnNames, type Cell, type RowName } from "./BoardHelpers";
 import { BoardRow } from "./BoardRow";
 
 export const YambBoard = () => {
