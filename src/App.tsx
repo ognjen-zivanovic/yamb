@@ -29,9 +29,7 @@ const App = () => {
 	const onReceivePeerData = useCallback(
 		(incoming: boolean, _conn: any, data: any) => {
 			if (!incoming) {
-				console.log(`Received peer data: ${data.data}`);
 				const peers = data.data.map((p: any) => p.id);
-				console.log("Peers: ", peers);
 				if (peers.length) connectToAllPeers(peers);
 				setPeerData(data.data);
 			}
@@ -175,6 +173,7 @@ const App = () => {
 		});
 	}, []);
 
+	const [willJoinHost, setWillJoinHost] = useState(false); // bad name
 	useEffect(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const gameIdFromUrl = urlParams.get("game");
@@ -185,9 +184,7 @@ const App = () => {
 		const hostIdFromUrl = urlParams.get("host");
 		if (hostIdFromUrl) {
 			setHostId(hostIdFromUrl);
-
-			console.log(`Host ID loaded from URL: ${hostIdFromUrl}`);
-			// remove it from url
+			setWillJoinHost(true);
 			window.history.replaceState({}, "", window.location.pathname);
 		}
 	}, []);
@@ -223,6 +220,8 @@ const App = () => {
 							setGameId={setGameId}
 							hostId={hostId}
 							setHostId={setHostId}
+							willJoinHost={willJoinHost}
+							setWillJoinHost={setWillJoinHost}
 						/>
 					) : (
 						<YambGame gameId={gameId} hostId={hostId} />

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { StateContext } from "../../contexts/GameContext";
+import { StateContext, TabelaContext } from "../../contexts/GameContext";
 import { isCellActive } from "./Board";
 import {
 	ColumnNames,
@@ -10,57 +10,24 @@ import {
 	type RowName,
 } from "./BoardHelpers";
 import { chooseCell } from "./choseCell";
+import { useNetworking } from "../../contexts/NetworkingContext";
 
-export const BoardRow = ({
-	rowIndex,
-	tabela,
-	updateTabela,
-	broadcastMessage,
-	sendMessageToNextPlayer,
-}: {
-	rowIndex: RowName;
-	tabela: Cell[][];
-	updateTabela: (row: number, col: number, cell: Cell) => void;
-	broadcastMessage: (type: string, data: any) => void;
-	sendMessageToNextPlayer: (message: string, data: any) => void;
-}) => {
+export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 	const { gameState, setGameState } = useContext(StateContext);
+	const { broadcastMessage, sendMessageToNextPlayer } = useNetworking();
+	const { tabela, updateTabela } = useContext(TabelaContext);
 
 	return (
-		<div className="flex h-[calc(7*100%/118)] flex-row">
-			<div
-				className={`bg-white border-main-500 border-1 h-full w-[calc(12*100%/106)] text-center align-middle flex items-center justify-center
-				
-			${
-				rowIndex === RowNames.Suma1 ||
-				rowIndex === RowNames.Suma2 ||
-				rowIndex === RowNames.Suma3
-					? "border-t-2 border-b-2"
-					: ""
-			}`}
-				onClick={() => {
-					if (
-						gameState.roundIndex == 1 &&
-						gameState.najava == undefined &&
-						gameState.dirigovana == undefined &&
-						rowIndex != RowNames.Suma1 &&
-						rowIndex != RowNames.Suma2 &&
-						rowIndex != RowNames.Suma3
-					) {
-						setGameState((prev) => ({ ...prev, najava: rowIndex }));
-						sendMessageToNextPlayer("najava", rowIndex);
-					}
-				}}
-			>
-				{rowHeaders[rowIndex % rowHeaders.length]}
-			</div>
+		<div className="h-row-7 flex flex-row">
+			<BoardRowName rowIndex={rowIndex} />
+
 			{Array.from({ length: 10 }).map((_, colIndex) => {
 				let isActive = isCellActive(tabela, rowIndex, colIndex, gameState);
 
 				return (
 					<div
 						key={rowIndex * numColumns + colIndex}
-						className={` border-main-500 border-1 h-full w-[calc(8*100%/106)] flex items-center justify-center text-[1.35rem] ${
+						className={` border-main-500 border-1 h-full w-col-8 flex items-center justify-center text-[1.35rem] ${
 							rowIndex === RowNames.Suma1 ||
 							rowIndex === RowNames.Suma2 ||
 							rowIndex === RowNames.Suma3
@@ -103,7 +70,7 @@ export const BoardRow = ({
 				);
 			})}
 			<div
-				className={`border-main-500 border-1 h-full w-[calc(14*100%/106)] text-[1.6rem] text-center ${
+				className={`border-main-500 border-1 h-full w-col-14 text-[1.6rem] text-center ${
 					rowIndex === RowNames.Suma1 ||
 					rowIndex === RowNames.Suma2 ||
 					rowIndex === RowNames.Suma3
@@ -115,6 +82,40 @@ export const BoardRow = ({
 					? tabela[rowIndex][ColumnNames.Yamb]?.value
 					: ""}
 			</div>
+		</div>
+	);
+};
+
+export const BoardRowName = ({ rowIndex }: { rowIndex: RowName }) => {
+	const { sendMessageToNextPlayer } = useNetworking();
+	const { gameState, setGameState } = useContext(StateContext);
+
+	return (
+		<div
+			className={`bg-white border-main-500 border-1 h-full w-col-12 text-center align-middle flex items-center justify-center
+				
+			${
+				rowIndex === RowNames.Suma1 ||
+				rowIndex === RowNames.Suma2 ||
+				rowIndex === RowNames.Suma3
+					? "border-t-2 border-b-2"
+					: ""
+			}`}
+			onClick={() => {
+				if (
+					gameState.roundIndex == 1 &&
+					gameState.najava == undefined &&
+					gameState.dirigovana == undefined &&
+					rowIndex != RowNames.Suma1 &&
+					rowIndex != RowNames.Suma2 &&
+					rowIndex != RowNames.Suma3
+				) {
+					setGameState((prev) => ({ ...prev, najava: rowIndex }));
+					sendMessageToNextPlayer("najava", rowIndex);
+				}
+			}}
+		>
+			{rowHeaders[rowIndex % rowHeaders.length]}
 		</div>
 	);
 };

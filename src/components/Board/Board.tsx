@@ -4,28 +4,13 @@ import { ColumnNames, type Cell, type RowName } from "./BoardHelpers";
 import { BoardHeaderRow } from "./BoardHeaderRow";
 import { BoardRow } from "./BoardRow";
 
-export const YambBoard = ({
-	tabela,
-	updateTabela,
-}: {
-	tabela: Cell[][];
-	updateTabela: (row: number, col: number, cell: Cell) => void;
-}) => {
-	const { broadcastMessage, sendMessageToNextPlayer } = useNetworking();
-
+export const YambBoard = () => {
 	return (
 		<>
 			<div className="flex aspect-[106/118] min-h-0 w-[600px] flex-col overflow-clip rounded-md border-4 border-solid border-main-500">
 				<BoardHeaderRow />
 				{Array.from({ length: 16 }).map((_, rowIndex) => (
-					<BoardRow
-						key={rowIndex}
-						rowIndex={rowIndex as RowName}
-						tabela={tabela}
-						updateTabela={updateTabela}
-						broadcastMessage={broadcastMessage}
-						sendMessageToNextPlayer={sendMessageToNextPlayer}
-					/>
+					<BoardRow key={rowIndex} rowIndex={rowIndex as RowName} />
 				))}
 			</div>
 		</>

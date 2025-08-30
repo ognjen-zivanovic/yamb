@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect } from "react";
 import { StateContext } from "../../contexts/GameContext";
 import {
 	DiceSixFacesFiveSvg,
@@ -9,9 +9,8 @@ import {
 	DiceSixFacesTwoSvg,
 	RollingDicesSvg,
 } from "../../Svgs";
-import { calculateValues, RowNames } from "../Board/BoardHelpers";
+import { calculateValues } from "../Board/BoardHelpers";
 import { AIAssistantButton } from "./AIAssistantButton";
-import Globals from "../../globals";
 
 export const DiceControls = ({
 	textRef,
@@ -59,6 +58,8 @@ export const DiceControls = ({
 		if (gameState.roundIndex >= 3) return;
 
 		setGameState((prev) => {
+			// start time
+
 			const nextRoundIndex = prev.roundIndex + 1;
 			const isRucna = numChosenDice === 0;
 			const rolledDice: number[] = [];

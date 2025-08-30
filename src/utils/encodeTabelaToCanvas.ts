@@ -11,7 +11,6 @@ export function encodeTabelaToCanvas(
 	themeColor: any,
 	canvasRef: any
 ) {
-	console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 	const rows = tabela.length;
 	const cols = tabela.reduce((max, r) => Math.max(max, r.length), 0);
 	const totalCells = rows * cols;
@@ -23,7 +22,6 @@ export function encodeTabelaToCanvas(
 	// third one stores rows in R, columns in G, and 255 in B and A
 	// fourth one stores the theme color
 
-	console.log("headerSize", headerSize);
 	const size = Math.ceil(Math.sqrt(totalCells + headerSize || 1));
 	const canvas = canvasRef.current!;
 	const w = size * size;
@@ -56,7 +54,6 @@ export function encodeTabelaToCanvas(
 	data[2 * 4 + 2] = (currTime >> 24) & 0xff;
 	data[2 * 4 + 3] = 255;
 
-	console.log(currTime);
 	data[3 * 4 + 0] = (currTime >> 16) & 0xff;
 	data[3 * 4 + 1] = (currTime >> 8) & 0xff;
 	data[3 * 4 + 2] = currTime & 0xff;
@@ -75,8 +72,6 @@ export function encodeTabelaToCanvas(
 	data[4 * 4 + 2] = BColor;
 	data[4 * 4 + 3] = AColor;
 
-	console.log("Encoding with color: ", RColor, GColor, BColor, AColor);
-
 	data[5 * 4 + 0] =
 		((gameState.isMyMove ? 1 : 0) << 7) |
 		((gameState.isRucna ? 1 : 0) << 6) |
@@ -91,7 +86,6 @@ export function encodeTabelaToCanvas(
 		gameState.chosenDice != undefined && gameState.rolledDice != undefined
 			? [...gameState.chosenDice, ...gameState.rolledDice]
 			: [0, 0, 0, 0, 0, 0];
-	console.log("DICE: ", dice);
 	data[6 * 4 + 0] =
 		((((0 < numChosen ? 1 : 0) << 3) | (dice[0] & 0b111)) << 4) |
 		(((1 < numChosen ? 1 : 0) << 3) | (dice[1] & 0b111));

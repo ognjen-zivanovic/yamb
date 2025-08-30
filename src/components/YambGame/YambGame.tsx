@@ -54,7 +54,6 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	}, []);
 
 	useEffect(() => {
-		console.log("MY BAD 2");
 		let data: any = {};
 
 		data.peerData = [...peerData];
@@ -107,7 +106,6 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 
 	useEffect(() => {
 		try {
-			console.log(tabela, themeColor, gameState);
 			encodeTabelaToCanvas(
 				tabela,
 				gameState,
@@ -158,7 +156,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 						style={{ transform: `scale(${scale})`, transformOrigin: "top" }}
 						className="relative"
 					>
-						<YambBoard tabela={tabela} updateTabela={updateTabela} />
+						<YambBoard />
 						<div
 							className="absolute m-6 rounded-md border-4 bg-main-200 p-2 text-3xl"
 							style={{ top: "525px" }}

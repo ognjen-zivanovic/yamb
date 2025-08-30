@@ -1,18 +1,12 @@
 import QRCode from "qrcode";
-import { type Dispatch, type SetStateAction, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { type PeerData } from "../../App";
-import { PeerDataContext, TabelaContext } from "../../contexts/GameContext";
+import { PeerDataContext, TabelaContext, type GameState } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
-import { DatabaseSvg, SmartphoneSvg, TrashCanSvg } from "../../Svgs";
-import {
-	createDefaultBoard,
-	ReverseRowNames,
-	RowNameFromNumber,
-	type Cell,
-} from "../Board/BoardHelpers";
-import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
-import { type GameState } from "../../contexts/GameContext";
 import Globals from "../../globals";
+import { DatabaseSvg, SmartphoneSvg, TrashCanSvg } from "../../Svgs";
+import { RowNameFromNumber, type Cell } from "../Board/BoardHelpers";
+import { ReadonlyYambBoard } from "../Board/ReadonlyBoard";
 
 // stolen from chatgpt
 function formatDate(date: Date) {
@@ -31,9 +25,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
 const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let savedGameData = data ? JSON.parse(data) : undefined;
-console.log(gameIdFromUrl);
 const savedPeerId = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-peerId") : undefined;
-console.log(savedPeerId);
 let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedName = savedGameData?.peerData[index].name;
 
@@ -42,11 +34,15 @@ export const NetworkingMenu = ({
 	setGameId,
 	hostId,
 	setHostId,
+	willJoinHost,
+	setWillJoinHost,
 }: {
 	setHasStarted: (hasStarted: boolean) => void;
 	setGameId: (gameId: string) => void;
 	hostId: string;
 	setHostId: Dispatch<SetStateAction<string>>;
+	willJoinHost: boolean;
+	setWillJoinHost: Dispatch<SetStateAction<boolean>>;
 }) => {
 	const { peerId, connectToPeer, broadcastMessage, registerDataCallback, setNextPeerId } =
 		useNetworking();
@@ -112,10 +108,8 @@ export const NetworkingMenu = ({
 		if (!incoming) {
 			setHasStarted(true);
 
-			console.log("Setting next peer id");
 			// fuck this shit
 			setPeerData((prev) => {
-				console.log("PEER DATA IS: ", prev);
 				const me = prev.findIndex((p) => p.id === peerId);
 				const nextPlayer = prev[(me + 1) % prev.length];
 				setNextPeerId(nextPlayer.id);
@@ -132,12 +126,46 @@ export const NetworkingMenu = ({
 		<div className="flex min-h-screen justify-center bg-gray-50">
 			<div className="mx-auto w-full max-w-2xl p-3 sm:p-6">
 				<div className="flex flex-col items-center rounded-lg bg-white p-4 shadow-lg sm:p-8">
-					<p className="mb-2 w-full text-base text-gray-400 sm:text-lg">
-						<strong>Your ID:</strong> {peerId}
-					</p>
+					{(isHost || willJoinHost) && (
+						<p className="mb-2 w-full text-base text-gray-400 sm:text-lg">
+							<strong>Your ID:</strong> {peerId}
+						</p>
+					)}
+
+					{!hostId && !willJoinHost && (
+						<div className="flex w-[60%] flex-col space-y-3">
+							<button
+								onClick={() => setWillJoinHost(true)}
+								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+							>
+								Join Game
+							</button>
+							<button
+								onClick={() => {
+									startHost();
+									setName("Host");
+								}}
+								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+								//disabled={!name.trim()}
+							>
+								Become Host
+							</button>
+							<button
+								onClick={() => {
+									Globals.isSolo = true;
+									setHasStarted(true);
+									setHostId(peerId);
+								}}
+								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+							>
+								Solo
+							</button>
+						</div>
+					)}
+
 					{!hasJoinedHost && (
 						<>
-							{!isHost ? (
+							{!isHost && willJoinHost && (
 								<div className="flex w-full flex-col gap-4 sm:gap-6">
 									<div className="flex flex-col gap-3 sm:flex-row">
 										<input
@@ -149,26 +177,18 @@ export const NetworkingMenu = ({
 										<button
 											onClick={joinHost}
 											disabled={!name.trim() || !hostId.trim()}
-											className="rounded-md bg-main-600 px-4 py-2 text-white transition-colors hover:bg-main-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+											className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 										>
 											Join
 										</button>
 									</div>
-									{!hostId && (
-										<button
-											onClick={startHost}
-											className="rounded-md bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
-											disabled={!name.trim()}
-										>
-											Become Host
-										</button>
-									)}
 									{
 										<div className="flex flex-col gap-3">
 											<div className="flex flex-row gap-3">
 												<input
 													placeholder="Your name"
 													value={name}
+													// TODO move this to settings
 													onChange={(e) => {
 														const newName = e.target.value;
 														setName(newName);
@@ -184,19 +204,9 @@ export const NetworkingMenu = ({
 											</div>
 										</div>
 									}
-									<div>
-										<button
-											onClick={() => {
-												Globals.isSolo = true;
-											}}
-											className="rounded-md bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
-											disabled={!name.trim()}
-										>
-											Solo
-										</button>
-									</div>
 								</div>
-							) : (
+							)}
+							{isHost && (
 								<div className="flex w-full flex-col gap-4 sm:gap-6">
 									<InviteLinkPanel peerId={peerId} />
 									<button
@@ -360,7 +370,7 @@ const PreviousGameFromSave = ({
 
 					for (let i = 0; i < pixels.length; i += 4) {
 						if (isPixelString(i, "OGN") && isPixelString(i + 4, "JEN")) {
-							console.log("Found O G N J E N");
+							//console.log("Found O G N J E N");
 							start = i;
 							startCnt++;
 						}
@@ -375,7 +385,6 @@ const PreviousGameFromSave = ({
 							(pixels[start + w + 0] << 16) |
 							(pixels[start + w + 1] << 8) |
 							pixels[start + w + 2];
-						let totalCells = rows * cols;
 
 						start += 2 * w;
 
@@ -383,7 +392,6 @@ const PreviousGameFromSave = ({
 						const GColor = pixels[start + 1];
 						const BColor = pixels[start + 2];
 						const AColor = pixels[start + 3];
-						console.log("Color: ", RColor, GColor, BColor, AColor);
 
 						start += w;
 
@@ -399,7 +407,6 @@ const PreviousGameFromSave = ({
 							dirigovanaNum == 15 ? undefined : RowNameFromNumber[dirigovanaNum];
 
 						let numPeers = pixels[start + 2];
-						console.log("NUM PEERS", numPeers);
 
 						start += w;
 						const chosenDice: number[] = [];
@@ -439,7 +446,6 @@ const PreviousGameFromSave = ({
 								pixels[start + 0].toString(16) +
 								pixels[start + 1].toString(16) +
 								pixels[start + 2].toString(16);
-							console.log("BANDZAAA: ", id);
 							peerDataLoaded.push({ id, name: "", index: i });
 						}
 
@@ -465,7 +471,6 @@ const PreviousGameFromSave = ({
 								let val: number | undefined = R;
 								if (hasValue == false) val = undefined;
 
-								console.log("Decoded: ", r, c, val, available);
 								if (val != undefined || available != undefined) {
 									updateTabela(r, c, {
 										value: val,
@@ -475,16 +480,16 @@ const PreviousGameFromSave = ({
 							}
 						}
 						if (!isDry) {
-							console.log(
-								"Decoded: ",
-								rows,
-								cols,
-								totalCells,
-								gameState,
-								peerDataLoaded,
-								peerId,
-								time
-							);
+							// console.log(
+							// 	"Decoded: ",
+							// 	rows,
+							// 	cols,
+							// 	totalCells,
+							// 	gameState,
+							// 	peerDataLoaded,
+							// 	peerId,
+							// 	time
+							// );
 
 							if (chosenDice.length != 0) gameState.chosenDice = chosenDice;
 							if (rolledDice.length != 0) gameState.rolledDice = rolledDice;

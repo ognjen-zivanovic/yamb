@@ -28,7 +28,6 @@ export interface NetworkingContextValue {
 const NetworkingContext = createContext<NetworkingContextValue | undefined>(undefined);
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
-const hostIdFromUrl = urlParams.get("host");
 const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let savedGameData = data ? JSON.parse(data) : undefined;
 const savedPeerId = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-peerId") : undefined;
@@ -37,7 +36,6 @@ let index = savedGameData?.peerData.findIndex((p: any) => p.id === savedPeerId);
 let savedNextPeerId = undefined;
 if (index != undefined && savedGameData != undefined) {
 	savedNextPeerId = savedGameData.peerData[(index + 1) % savedGameData.peerData.length]?.id;
-	console.log("Next peer id is ", savedNextPeerId);
 }
 
 const alphabet = "ABCDEF0123456789";
@@ -72,10 +70,6 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 			peer.destroy();
 		};
 	}, []);
-
-	useEffect(() => {
-		console.log(connections);
-	}, [connections]);
 
 	const connectToPeer = (id: string) => {
 		if (!peer) return;
