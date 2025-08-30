@@ -1,6 +1,7 @@
 import type { PeerData } from "../App";
 import type { Cell } from "../components/Board/BoardHelpers";
 import type { GameState } from "../contexts/GameContext";
+import Globals from "../globals";
 
 export function encodeTabelaToCanvas(
 	tabela: Cell[][],
@@ -75,7 +76,8 @@ export function encodeTabelaToCanvas(
 	data[5 * 4 + 0] =
 		((gameState.isMyMove ? 1 : 0) << 7) |
 		((gameState.isRucna ? 1 : 0) << 6) |
-		(gameState.roundIndex & 0b00111111);
+		((Globals.isSolo ? 1 : 0) << 5) |
+		(gameState.roundIndex & 0b00011111);
 	data[5 * 4 + 1] =
 		(((gameState.najava ?? -1) & 0xf) << 4) | ((gameState.dirigovana ?? -1) & 0xf);
 	data[5 * 4 + 2] = peerData.length & 0xff;

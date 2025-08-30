@@ -57,13 +57,12 @@ export const SetNewAvailable = (
 	rowIndex: number,
 	colIndex: number
 ) => {
-	let di = 0;
 	if (
 		colIndex == ColumnNames.OdGore ||
 		colIndex == ColumnNames.OdGoreIDole ||
 		colIndex == ColumnNames.OdSredine
 	) {
-		di = 1;
+		SetNewInDirection(tabela, updateTabela, rowIndex, colIndex, 1);
 	}
 
 	if (
@@ -71,11 +70,17 @@ export const SetNewAvailable = (
 		colIndex == ColumnNames.OdGoreIDole ||
 		colIndex == ColumnNames.OdSredine
 	) {
-		di = -1;
+		SetNewInDirection(tabela, updateTabela, rowIndex, colIndex, -1);
 	}
+};
 
-	if (di == 0) return;
-
+const SetNewInDirection = (
+	tabela: Cell[][],
+	updateTabela: (row: number, col: number, cell: Cell) => void,
+	rowIndex: number,
+	colIndex: number,
+	di: number
+) => {
 	let nextIndex = rowIndex + di;
 	if (nextIndex == RowNames.Suma1 || nextIndex == RowNames.Suma2 || nextIndex == RowNames.Suma3) {
 		nextIndex += di;

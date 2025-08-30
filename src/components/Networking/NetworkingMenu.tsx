@@ -324,7 +324,7 @@ const PreviousGameFromSave = ({
 			setTabela(savedGameData);
 			setIsSaveLoaded(true);
 		} else {
-			window.location.href = "/?game=" + game.id;
+			window.location.href = "/yamb/?game=" + game.id;
 		}
 	};
 
@@ -345,6 +345,9 @@ const PreviousGameFromSave = ({
 				const img = new Image();
 
 				img.onload = () => {
+					function stringFromHex(value: number) {
+						return value.toString(16).padStart(2, "0").toUpperCase();
+					}
 					//const canvas = canvasRef.current!;
 					// create a temp invisible canvas
 					const canvas = document.createElement("canvas");
@@ -410,7 +413,8 @@ const PreviousGameFromSave = ({
 
 						gameState.isMyMove = (pixels[start + 0] & (1 << 7)) != 0;
 						gameState.isRucna = (pixels[start + 0] & (1 << 6)) != 0;
-						gameState.roundIndex = pixels[start + 0] & 0b00111111;
+						Globals.isSolo = (pixels[start + 0] & (1 << 5)) != 0; // TODO: maybe fix this or something
+						gameState.roundIndex = pixels[start + 0] & 0b00011111;
 
 						let najavaNum = (pixels[start + 1] & 0xf0) >> 4;
 						let dirigovanaNum = pixels[start + 1] & 0xf;
@@ -443,25 +447,26 @@ const PreviousGameFromSave = ({
 
 						start += w;
 						let gameId =
-							pixels[start + 0].toString(16) +
-							pixels[start + 1].toString(16) +
-							pixels[start + 2].toString(16);
+							stringFromHex(pixels[start + 0]) +
+							stringFromHex(pixels[start + 1]) +
+							stringFromHex(pixels[start + 2]);
 
 						start += w;
 						let peerId =
-							pixels[start + 0].toString(16) +
-							pixels[start + 1].toString(16) +
-							pixels[start + 2].toString(16);
+							stringFromHex(pixels[start + 0]) +
+							stringFromHex(pixels[start + 1]) +
+							stringFromHex(pixels[start + 2]);
 
 						for (let i = 0; i < numPeers; i++) {
 							start += w;
 							let id =
-								pixels[start + 0].toString(16) +
-								pixels[start + 1].toString(16) +
-								pixels[start + 2].toString(16);
+								stringFromHex(pixels[start + 0]) +
+								stringFromHex(pixels[start + 1]) +
+								stringFromHex(pixels[start + 2]);
 							peerDataLoaded.push({ id, name: "", index: i });
 						}
 
+						start += w;
 						for (let r = 0; r < rows; r++) {
 							for (let c = 0; c < cols; c++) {
 								const cellIndex = r * cols + c;
@@ -484,6 +489,7 @@ const PreviousGameFromSave = ({
 								let val: number | undefined = R;
 								if (hasValue == false) val = undefined;
 
+								console.log(r, c, val, available, R, G, B, A);
 								if (val != undefined || available != undefined) {
 									updateTabela(r, c, {
 										value: val,
@@ -522,16 +528,17 @@ const PreviousGameFromSave = ({
 								data.gameState = gameState;
 								data.color =
 									"#" +
-									RColor.toString(16) +
-									GColor.toString(16) +
-									BColor.toString(16);
+									stringFromHex(RColor) +
+									stringFromHex(GColor) +
+									stringFromHex(BColor);
 								data.date = time;
+								data.globals = Globals;
 
 								localStorage.setItem(gameId + "-data", JSON.stringify(data));
 
 								localStorage.setItem(gameId + "-peerId", peerId);
 
-								//window.location.href = "/?game=" + gameId;
+								window.location.href = "/yamb/?game=" + gameId;
 								return prev;
 							});
 						}
@@ -585,7 +592,8 @@ const PreviousGameFromSave = ({
 							style={{ borderColor: game.color, wordBreak: "break-word" }}
 						>
 							<span className="text-black">
-								{formatDate(new Date(game.date))} ({game.names})
+								{formatDate(new Date(game.date))}{" "}
+								{game.names != "" && "(" + game.names + ")"}
 							</span>
 
 							<span className="text-gray-500"> {game.id}</span>
