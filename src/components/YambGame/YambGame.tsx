@@ -184,11 +184,13 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 								{gameState.isMyMove && gameState.roundIndex > 0 && (
 									<>
 										<button
-											className="h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]"
+											className={`h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px] ${
+												gameState.blackout ? "!bg-red-500 border-black" : ""
+											}`}
 											onClick={() =>
 												setGameState((prev) => ({
 													...prev,
-													blackout: true,
+													blackout: !prev.blackout,
 												}))
 											}
 										>

@@ -122,6 +122,8 @@ export const NetworkingMenu = ({
 
 	registerDataCallback("start-game", onReceiveStartGame);
 
+	const [isDry, setIsDry] = useState(true);
+
 	return (
 		<div className="flex min-h-screen justify-center bg-gray-50">
 			<div className="mx-auto w-full max-w-2xl p-3 sm:p-6">
@@ -132,8 +134,8 @@ export const NetworkingMenu = ({
 						</p>
 					)}
 
-					{!hostId && !willJoinHost && (
-						<div className="flex w-[60%] flex-col space-y-3">
+					{!hostId && !willJoinHost && !hasJoinedHost && (
+						<div className="mb-6 flex w-[60%] flex-col space-y-3">
 							<button
 								onClick={() => setWillJoinHost(true)}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
@@ -159,6 +161,15 @@ export const NetworkingMenu = ({
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 							>
 								Solo
+							</button>
+							<button
+								onClick={() => {
+									setHasJoinedHost(true);
+									setIsDry(false);
+								}}
+								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+							>
+								Load game
 							</button>
 						</div>
 					)}
@@ -230,6 +241,7 @@ export const NetworkingMenu = ({
 									setTabela={setTabela}
 									updateTabela={updateTabela}
 									setIsSaveLoaded={setIsSaveLoaded}
+									isDry={isDry}
 								/>
 							)}
 						</>
@@ -246,7 +258,7 @@ const PreviousGameFromSave = ({
 	setTabela,
 	updateTabela,
 	setIsSaveLoaded,
-	isDry = false,
+	isDry = true,
 }: {
 	setTabela: Dispatch<SetStateAction<Cell[][]>>;
 	updateTabela: (rowIndex: number, colIndex: number, value: Cell) => void;
