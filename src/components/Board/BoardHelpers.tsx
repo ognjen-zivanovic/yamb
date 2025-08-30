@@ -219,10 +219,7 @@ export const calculateValues = ({
 		numOccurences[5] >= 1 &&
 		(numOccurences[1] >= 1 || numOccurences[6] >= 1)
 	) {
-		newValues[RowNames.Kenta] = Math.max(
-			newValues[RowNames.Kenta],
-			66 - 10 * (roundNumber - 1)
-		);
+		newValues[RowNames.Kenta] = Math.max(newValues[RowNames.Kenta], 66 - 10 * roundNumber);
 	}
 	newValues[RowNames.Jedinice] = Math.max(newValues[RowNames.Jedinice], numOccurences[1] * 1);
 	newValues[RowNames.Dvojke] = Math.max(newValues[RowNames.Dvojke], numOccurences[2] * 2);

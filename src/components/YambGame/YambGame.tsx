@@ -13,12 +13,17 @@ import { YambBoard } from "../Board/Board";
 import type { RowName } from "../Board/BoardHelpers";
 import { DiceControls } from "../Dice/DiceControls";
 import { GptSettings, type GptSettingsHandle } from "../Dice/GptSettings";
+import Globals from "../../globals";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
 
 const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let dataObj = data ? JSON.parse(data) : undefined;
+
+if (dataObj?.globals) {
+	Globals.isSolo = dataObj?.globals.isSolo;
+}
 
 export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string }) => {
 	const [gameState, setGameState] = useState<GameState>(
@@ -63,6 +68,10 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 		data.gameState = gameState;
 		data.color = themeColor;
 		data.date = new Date().getTime();
+
+		data.globals = Globals;
+
+		console.log("MY GLOBALS ARE: ", Globals);
 
 		localStorage.setItem(gameId + "-data", JSON.stringify(data));
 		localStorage.setItem(gameId + "-peerId", peerId); // should this be moved to NetworkingContext?

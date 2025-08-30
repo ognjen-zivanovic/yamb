@@ -1,22 +1,54 @@
-import { useContext } from "react";
-import { StateContext, TabelaContext } from "../../contexts/GameContext";
+import { memo, useContext } from "react";
+import { StateContext, TabelaContext, type GameState } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
 import { isCellActive } from "./Board";
-import { ColumnNames, numColumns, rowHeaders, RowNames, type RowName } from "./BoardHelpers";
+import {
+	ColumnNames,
+	numColumns,
+	rowHeaders,
+	RowNames,
+	type Cell,
+	type ColumnName,
+	type RowName,
+} from "./BoardHelpers";
 import { chooseCell } from "./choseCell";
 
 export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
-	const { gameState, setGameState } = useContext(StateContext);
 	const { broadcastMessage, sendMessageToNextPlayer } = useNetworking();
+	const { gameState, setGameState } = useContext(StateContext);
 	const { tabela, updateTabela } = useContext(TabelaContext);
 
 	return (
 		<div className="h-row-7 flex flex-row">
-			<BoardRowName rowIndex={rowIndex} />
+			<div
+				className={`bg-white border-main-500 border-1 h-full w-col-12 text-center align-middle flex items-center justify-center
+				
+			${
+				rowIndex === RowNames.Suma1 ||
+				rowIndex === RowNames.Suma2 ||
+				rowIndex === RowNames.Suma3
+					? "border-t-2 border-b-2"
+					: ""
+			}`}
+				onClick={() => {
+					if (
+						gameState.roundIndex == 1 &&
+						gameState.najava == undefined &&
+						gameState.dirigovana == undefined &&
+						rowIndex != RowNames.Suma1 &&
+						rowIndex != RowNames.Suma2 &&
+						rowIndex != RowNames.Suma3
+					) {
+						setGameState((prev) => ({ ...prev, najava: rowIndex }));
+						sendMessageToNextPlayer("najava", rowIndex);
+					}
+				}}
+			>
+				{rowHeaders[rowIndex % rowHeaders.length]}
+			</div>
 
 			{Array.from({ length: 10 }).map((_, colIndex) => {
 				let isActive = isCellActive(tabela, rowIndex, colIndex, gameState);
-
 				return (
 					<div
 						key={rowIndex * numColumns + colIndex}
@@ -75,40 +107,6 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 					? tabela[rowIndex][ColumnNames.Yamb]?.value
 					: ""}
 			</div>
-		</div>
-	);
-};
-
-export const BoardRowName = ({ rowIndex }: { rowIndex: RowName }) => {
-	const { sendMessageToNextPlayer } = useNetworking();
-	const { gameState, setGameState } = useContext(StateContext);
-
-	return (
-		<div
-			className={`bg-white border-main-500 border-1 h-full w-col-12 text-center align-middle flex items-center justify-center
-				
-			${
-				rowIndex === RowNames.Suma1 ||
-				rowIndex === RowNames.Suma2 ||
-				rowIndex === RowNames.Suma3
-					? "border-t-2 border-b-2"
-					: ""
-			}`}
-			onClick={() => {
-				if (
-					gameState.roundIndex == 1 &&
-					gameState.najava == undefined &&
-					gameState.dirigovana == undefined &&
-					rowIndex != RowNames.Suma1 &&
-					rowIndex != RowNames.Suma2 &&
-					rowIndex != RowNames.Suma3
-				) {
-					setGameState((prev) => ({ ...prev, najava: rowIndex }));
-					sendMessageToNextPlayer("najava", rowIndex);
-				}
-			}}
-		>
-			{rowHeaders[rowIndex % rowHeaders.length]}
 		</div>
 	);
 };

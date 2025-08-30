@@ -9,6 +9,7 @@ import { NetworkingMenu } from "./components/Networking/NetworkingMenu";
 import { YambGame } from "./components/YambGame/YambGame";
 import { PeerDataContext, TabelaContext } from "./contexts/GameContext";
 import { useNetworking } from "./contexts/NetworkingContext";
+import { HouseSvg } from "./Svgs";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
@@ -104,7 +105,8 @@ const App = () => {
 
 	const updateTabela = useCallback((row: number, col: number, value: Cell) => {
 		setTabela((prev) => {
-			const copy = prev.map((row) => [...row]);
+			//const copy = prev.map((row) => [...row]);
+			const copy = prev;
 			copy[row][col] = value;
 
 			const calculateSumOfFirstSum = (colIndex: number) => {
@@ -228,6 +230,14 @@ const App = () => {
 					)}
 				</PeerDataContext.Provider>
 			</TabelaContext.Provider>
+			<button
+				className="fixed bottom-[5vw] right-[5vw] h-[9.75vw] w-[9.75vw] rounded-[0.9vw] border-[0.5vw] border-main-600 bg-main-900 p-[0.6vw] sm:bottom-[32px] sm:right-[32px] sm:h-[50px] sm:w-[50px] sm:rounded-[6px] sm:border-[2px] sm:p-[4px]"
+				onClick={() => {
+					window.location.href = "/yamb/";
+				}}
+			>
+				<HouseSvg className="h-full w-full" />
+			</button>
 		</div>
 	);
 };

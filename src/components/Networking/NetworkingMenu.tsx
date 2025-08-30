@@ -157,6 +157,7 @@ export const NetworkingMenu = ({
 									Globals.isSolo = true;
 									setHasStarted(true);
 									setHostId(peerId);
+									setGameId(peerId);
 								}}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 							>
