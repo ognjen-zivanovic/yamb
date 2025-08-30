@@ -69,21 +69,21 @@ No extra text, no markdown, no explanations outside JSON.
 				cols={60}
 				value={gptInstruction}
 				onChange={(e) => setGptInstruction(e.target.value)}
-				className="absolute top-[-675px] rounded-xl border-4 bg-main-50 pl-2"
+				className="bg-background absolute top-[-675px] rounded-xl border-4 pl-2"
 			/>
 			<textarea
 				rows={5}
 				cols={60}
 				value={gptSystem}
 				onChange={(e) => setGptSystem(e.target.value)}
-				className="absolute top-[-275px] rounded-xl border-4 bg-main-50 pl-2"
+				className="bg-background absolute top-[-275px] rounded-xl border-4 pl-2"
 			/>
 			<textarea
 				rows={1}
 				cols={60}
 				value={gptModel}
 				onChange={(e) => setGptModel(e.target.value)}
-				className="absolute top-[-125px] rounded-xl border-4 bg-main-50 pl-2"
+				className="bg-background absolute top-[-125px] rounded-xl border-4 pl-2"
 			/>
 		</div>
 	);

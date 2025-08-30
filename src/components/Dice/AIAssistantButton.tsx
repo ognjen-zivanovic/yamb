@@ -111,50 +111,57 @@ export const AIAssistantButton = ({
 		];
 
 		console.log(messages);
+		try {
+			const response = await openai.chat.completions.create({
+				//model: "gpt-3.5-turbo-1106",
+				model: gptModel,
+				messages,
+				response_format: { type: "json_object" },
+			});
 
-		const response = await openai.chat.completions.create({
-			//model: "gpt-3.5-turbo-1106",
-			model: gptModel,
-			messages,
-			response_format: { type: "json_object" },
-		});
+			const reply = response.choices[0].message.content;
 
-		const reply = response.choices[0].message.content;
+			if (reply) {
+				const result = JSON.parse(reply);
+				console.log("✅ AI Response:", result);
 
-		if (reply) {
-			const result = JSON.parse(reply);
-			console.log("✅ AI Response:", result);
-
-			// parse the response
-			if (result.action === "keep") {
-				keepDice(result.diceToKeep);
-			}
-			if (result.reason != undefined && textRef) {
-				textRef.hidden = false;
-				textRef.style.top = "525px";
-				if (result.action === "score") {
-					textRef.style.top = "725px";
+				// parse the response
+				if (result.action === "keep") {
+					keepDice(result.diceToKeep);
 				}
-				textRef.textContent = "☝️🤖 " + result.reason;
+				if (result.reason != undefined && textRef) {
+					textRef.hidden = false;
+					textRef.style.top = "525px";
+					if (result.action === "score") {
+						textRef.style.top = "725px";
+					}
+					textRef.textContent = "☝️🤖 " + result.reason;
+				}
+				if (result.action === "score") {
+					let rowIndex = RowNameFromString[result.category.row] as RowName;
+					let colIndex = ColumnNameFromString[result.category.col] as ColumnName;
+					chooseCell({
+						rowIndex,
+						colIndex,
+						gameState,
+						isActive: isCellActive(tabela, rowIndex, colIndex, gameState),
+						tabela,
+						updateTabela,
+						setGameState,
+						broadcastMessage,
+						sendMessageToNextPlayer,
+					});
+				}
+				return result;
 			}
-			if (result.action === "score") {
-				let rowIndex = RowNameFromString[result.category.row] as RowName;
-				let colIndex = ColumnNameFromString[result.category.col] as ColumnName;
-				chooseCell({
-					rowIndex,
-					colIndex,
-					gameState,
-					isActive: isCellActive(tabela, rowIndex, colIndex, gameState),
-					tabela,
-					updateTabela,
-					setGameState,
-					broadcastMessage,
-					sendMessageToNextPlayer,
-				});
+		} catch (error) {
+			console.error("Error calling AI assistant:", error);
+			if (textRef) {
+				textRef.textContent = "⚠️ ERROR ⚠️ ☝️🤖 " + error;
+				textRef.hidden = false;
+				textRef.style.top = "0px";
 			}
-			return result;
-		} else {
-			throw new Error("No response from AI");
+			return;
 		}
 	};
 

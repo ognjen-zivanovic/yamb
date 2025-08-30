@@ -125,11 +125,11 @@ export const NetworkingMenu = ({
 	const [isDry, setIsDry] = useState(true);
 
 	return (
-		<div className="flex min-h-screen justify-center bg-gray-50">
+		<div className="flex min-h-screen justify-center">
 			<div className="mx-auto w-full max-w-2xl p-3 sm:p-6">
-				<div className="flex flex-col items-center rounded-lg bg-white p-4 shadow-lg sm:p-8">
+				<div className="bg-control flex flex-col items-center rounded-lg p-4 shadow-lg sm:p-8">
 					{(isHost || willJoinHost) && (
-						<p className="mb-2 w-full text-base text-gray-400 sm:text-lg">
+						<p className="text-my-gray mb-2 w-full text-base sm:text-lg">
 							<strong>Your ID:</strong> {peerId}
 						</p>
 					)}
@@ -183,7 +183,9 @@ export const NetworkingMenu = ({
 										<input
 											placeholder="Host ID"
 											value={hostId}
-											onChange={(e) => setHostId(e.target.value)}
+											onChange={(e) =>
+												setHostId(e.target.value.toUpperCase())
+											}
 											className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
 										/>
 										<button
@@ -223,9 +225,9 @@ export const NetworkingMenu = ({
 									<InviteLinkPanel peerId={peerId} />
 									<button
 										onClick={startGame}
-										className="rounded-md bg-purple-500 px-4 py-2 text-white transition-colors hover:bg-purple-600 sm:px-6"
+										className="rounded-md bg-main-500 px-4 py-2 text-white transition-colors hover:bg-main-600 sm:px-6"
 									>
-										Start game!
+										Pokreni igru
 									</button>
 								</div>
 							)}
@@ -364,8 +366,6 @@ const PreviousGameFromSave = ({
 					const imageData = ctx.getImageData(0, 0, img.width, img.height);
 					const pixels = imageData.data; // Uint8ClampedArray [r, g, b, a, r, g, b, a, ...]
 
-					// console.log("Pixel data:", pixels);
-					// console.log(`Image dimensions: ${img.width}x${img.height}`);
 					let start = -1;
 					let startCnt = 0;
 					let gameState: GameState = {
@@ -489,7 +489,6 @@ const PreviousGameFromSave = ({
 								let val: number | undefined = R;
 								if (hasValue == false) val = undefined;
 
-								console.log(r, c, val, available, R, G, B, A);
 								if (val != undefined || available != undefined) {
 									updateTabela(r, c, {
 										value: val,
@@ -588,15 +587,15 @@ const PreviousGameFromSave = ({
 							onClick={() => {
 								loadGameFromLocalStorage(game);
 							}}
-							className="flex-1 whitespace-normal rounded-md border-2 bg-gray-200 p-1 text-left"
+							className="bg-inner-bg flex-1 whitespace-normal rounded-md border-2 p-1 text-left"
 							style={{ borderColor: game.color, wordBreak: "break-word" }}
 						>
-							<span className="text-black">
+							<span className="text-my-black">
 								{formatDate(new Date(game.date))}{" "}
 								{game.names != "" && "(" + game.names + ")"}
 							</span>
 
-							<span className="text-gray-500"> {game.id}</span>
+							<span className="text-my-gray"> {game.id}</span>
 						</button>
 					</div>
 				))}
@@ -663,7 +662,7 @@ const PeerDataPanel = ({
 		setDragOverIndex(null);
 	};
 	return (
-		<div className="mb-4 mt-4 w-full rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:mt-6 sm:p-6">
+		<div className="bg-inner-bg mb-4 mt-4 w-full rounded-lg border-2 border-gray-300 p-4 sm:mt-6 sm:p-6">
 			<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Peer Data</h3>
 			<ul className="space-y-3">
 				{peerData.map((p, index) => (
@@ -680,14 +679,14 @@ const PeerDataPanel = ({
 								? "bg-gray-200"
 								: dragOverIndex === index
 								? "border-dashed border-main-600 bg-main-50"
-								: "border-gray-300 bg-white hover:bg-gray-50"
+								: "border-gray-300 bg-control hover:bg-inner-bg"
 						}`}
 					>
 						<div className="flex flex-row items-center gap-1 sm:gap-2">
 							<span className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-medium">
 								{p.name || "Unnamed"}
 							</span>
-							<span className="text-nowrap text-gray-500">({p.id})</span>
+							<span className="text-nowrap text-my-gray">({p.id})</span>
 							<div className="flex flex-1 flex-row justify-end">
 								<button
 									className="h-6 w-6 rounded-md border-2 border-red-600 bg-red-900"
@@ -731,18 +730,18 @@ const InviteLinkPanel = ({ peerId }: { peerId: string }) => {
 
 	return (
 		inviteLink && (
-			<div className="flex flex-col items-center rounded-lg border-2 border-gray-300 bg-gray-50 p-4 sm:p-6">
+			<div className="bg-inner-bg flex flex-col items-center rounded-lg border-2 border-gray-300 p-4 sm:p-6">
 				<div className="mb-4 flex w-full flex-col gap-3 sm:flex-row">
 					<input
 						value={inviteLink}
 						readOnly
-						className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+						className="flex-1 rounded-md border-2 border-gray-300 px-3 py-2"
 					/>
 					<button
 						onClick={() => navigator.clipboard.writeText(inviteLink)}
-						className="rounded-md bg-gray-500 px-3 py-2 text-sm text-white transition-colors hover:bg-gray-600 sm:px-4"
+						className="rounded-md bg-main-950 px-3 py-2 text-white transition-colors hover:bg-main-900 sm:px-4"
 					>
-						Copy
+						Kopiraj
 					</button>
 				</div>
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	ColumnNames,
 	createDefaultBoard,
@@ -9,13 +9,28 @@ import { NetworkingMenu } from "./components/Networking/NetworkingMenu";
 import { YambGame } from "./components/YambGame/YambGame";
 import { PeerDataContext, TabelaContext } from "./contexts/GameContext";
 import { useNetworking } from "./contexts/NetworkingContext";
-import { HouseSvg } from "./Svgs";
+import { HouseSvg, MoonSvg, SunSvg } from "./Svgs";
+import { generateTailwindShades } from "./utils/generateTailwindShades";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
 
 const data = gameIdFromUrl ? localStorage.getItem(gameIdFromUrl + "-data") : undefined;
 let dataObj = data ? JSON.parse(data) : undefined;
+
+type Theme = "light" | "dark";
+
+function setThemeValues(newTheme: Theme) {
+	let colors = ["bg", "fg", "black", "gray", "shade-1", "inner-bg", "control"];
+	for (let color of colors) {
+		document.documentElement.style.setProperty(
+			`--${color}-color`,
+			`var(--${color}-${newTheme})`
+		);
+	}
+}
+let theme: Theme = localStorage.getItem("theme") === "dark" ? "dark" : "light";
+if (theme != "light") setThemeValues(theme);
 
 // 🦍
 const App = () => {
@@ -26,6 +41,8 @@ const App = () => {
 	const [peerData, setPeerData] = useState<PeerData[]>(dataObj?.peerData ?? []);
 
 	const { connectToAllPeers, registerCallback, registerDataCallback } = useNetworking();
+
+	const [theme, setTheme] = useState<Theme>("light");
 
 	const onReceivePeerData = useCallback(
 		(incoming: boolean, _conn: any, data: any) => {
@@ -191,6 +208,65 @@ const App = () => {
 		}
 	}, []);
 
+	// EASTER EGG ----------------------------------
+	const tapsRef = useRef<number[]>([]);
+	const TAP_WINDOW = 600; // ms
+
+	const [isRunning, setIsRunning] = useState(false);
+	const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+	// function that gets called every second
+	const tick = () => {
+		let randomColor = Math.floor(Math.random() * 16777215)
+			.toString(16)
+			.padStart(6, "0");
+		generateTailwindShades(randomColor);
+	};
+
+	useEffect(() => {
+		if (isRunning) {
+			intervalRef.current = setInterval(tick, 1000);
+		} else if (intervalRef.current) {
+			clearInterval(intervalRef.current);
+			intervalRef.current = null;
+		}
+
+		// cleanup on unmount
+		return () => {
+			if (intervalRef.current) clearInterval(intervalRef.current);
+		};
+	}, [isRunning]);
+
+	useEffect(() => {
+		function handleClick() {
+			const now = Date.now();
+			tapsRef.current.push(now);
+
+			// keep only last 5
+			if (tapsRef.current.length > 5) tapsRef.current.shift();
+
+			// check if 5 taps within window
+			if (
+				tapsRef.current.length === 5 &&
+				tapsRef.current[4] - tapsRef.current[0] <= TAP_WINDOW
+			) {
+				setIsRunning((prev) => !prev);
+
+				tapsRef.current = []; // reset
+			}
+
+			// drop stale taps
+			const cutoff = now - TAP_WINDOW;
+			while (tapsRef.current.length && tapsRef.current[0] < cutoff) {
+				tapsRef.current.shift();
+			}
+		}
+
+		document.body.addEventListener("click", handleClick);
+		return () => document.body.removeEventListener("click", handleClick);
+	}, []);
+	// EASTER EGG ----------------------------------
+
 	useEffect(() => {
 		if (gameId) {
 			const urlParams = new URLSearchParams(window.location.search);
@@ -236,7 +312,19 @@ const App = () => {
 					window.location.href = "/yamb/";
 				}}
 			>
-				<HouseSvg className="h-full w-full" />
+				<HouseSvg />
+			</button>
+			<button
+				className="fixed bottom-[5vw] left-[5vw] h-[9.75vw] w-[9.75vw] rounded-[0.9vw] border-[0.5vw] border-main-600 bg-main-900 p-[0.6vw] sm:bottom-[32px] sm:left-[32px] sm:h-[50px] sm:w-[50px] sm:rounded-[6px] sm:border-[2px] sm:p-[4px]"
+				onClick={() => {
+					let newTheme: Theme = theme === "light" ? "dark" : "light";
+
+					setThemeValues(newTheme);
+					setTheme(newTheme);
+					localStorage.setItem("theme", newTheme);
+				}}
+			>
+				{theme === "light" ? <MoonSvg /> : <SunSvg />}
 			</button>
 		</div>
 	);

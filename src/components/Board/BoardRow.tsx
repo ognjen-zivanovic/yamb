@@ -13,7 +13,7 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 	return (
 		<div className="h-row-7 flex flex-row">
 			<div
-				className={`bg-white border-main-500 border-1 h-full w-col-12 text-center align-middle flex items-center justify-center
+				className={` border-main-500 border-1 h-full w-col-12 text-center align-middle flex items-center justify-center
 
 			${
 				rowIndex === RowNames.Suma1 ||
@@ -48,20 +48,17 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 							rowIndex === RowNames.Suma1 ||
 							rowIndex === RowNames.Suma2 ||
 							rowIndex === RowNames.Suma3
-								? "bg-main-300 border-t-2 border-b-2"
-								: "bg-white"
-						} ${isActive ? "border-2 border-gray-800" : ""} ${
-							tabela[rowIndex][colIndex]?.value == undefined
-								? "text-gray-500"
-								: "text-black font-bold"
-						} ${
+								? "bg-shade-1 border-t-2 border-b-2"
+								: ""
+						} ${isActive ? "border-2 border-gray-800" : ""} 
+						${tabela[rowIndex][colIndex]?.value == undefined ? "text-my-gray" : "text-my-black font-bold"} ${
 							tabela[rowIndex][colIndex]?.value == 0 ||
 							(isActive && gameState.value[rowIndex] == -1)
-								? "!bg-gray-800 !border-0 text-transparent"
+								? "!bg-my-black !border-0 text-transparent"
 								: ""
 						} ${
 							colIndex == ColumnNames.Obavezna || colIndex == ColumnNames.Maksimalna
-								? "brightness-75"
+								? "brightness-75 bg-background"
 								: ""
 						}`}
 						onClick={() => {
@@ -91,8 +88,8 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 					rowIndex === RowNames.Suma1 ||
 					rowIndex === RowNames.Suma2 ||
 					rowIndex === RowNames.Suma3
-						? "bg-main-300 border-t-2 border-b-2"
-						: "bg-white"
+						? "bg-shade-1 border-t-2 border-b-2"
+						: ""
 				}`}
 			>
 				{tabela[rowIndex][ColumnNames.Yamb]?.value != undefined

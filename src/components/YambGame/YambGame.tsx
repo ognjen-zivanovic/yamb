@@ -71,8 +71,6 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 
 		data.globals = Globals;
 
-		console.log("MY GLOBALS ARE: ", Globals);
-
 		localStorage.setItem(gameId + "-data", JSON.stringify(data));
 		localStorage.setItem(gameId + "-peerId", peerId); // should this be moved to NetworkingContext?
 	}, [gameState, tabela, peerData, themeColor]);
