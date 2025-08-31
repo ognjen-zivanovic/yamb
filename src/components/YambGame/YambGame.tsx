@@ -165,7 +165,7 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 					>
 						<YambBoard />
 						<div
-							className="absolute m-6 rounded-md border-4 bg-main-200 p-2 text-3xl"
+							className="bg-shade-1 absolute m-6 rounded-md border-4 p-2 text-3xl"
 							style={{ top: "525px" }}
 							onClick={(e) => {
 								(e.target as HTMLDivElement).hidden = true;

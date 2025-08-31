@@ -149,7 +149,7 @@ export const DiceControls = ({
 				<div className="flex flex-row items-center justify-around gap-4 sm:flex-col">
 					{gameState.roundIndex > 0 && (
 						<div className="flex h-[65px] flex-row items-center justify-around gap-x-2 rounded-md text-center sm:h-[50px] sm:w-[50px] sm:flex-col">
-							<p className="text-2xl font-bold sm:text-xl">Round</p>
+							<p className="text-2xl font-bold sm:text-xl">Runda</p>
 							<p className="text-2xl font-bold sm:text-xl">
 								{gameState.roundIndex + "/3"}
 							</p>

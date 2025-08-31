@@ -29,8 +29,8 @@ function setThemeValues(newTheme: Theme) {
 		);
 	}
 }
-let theme: Theme = localStorage.getItem("theme") === "dark" ? "dark" : "light";
-if (theme != "light") setThemeValues(theme);
+let loadedTheme: Theme = localStorage.getItem("theme") === "dark" ? "dark" : "light";
+if (loadedTheme != "light") setThemeValues(loadedTheme);
 
 // 🦍
 const App = () => {
@@ -42,7 +42,7 @@ const App = () => {
 
 	const { connectToAllPeers, registerCallback, registerDataCallback } = useNetworking();
 
-	const [theme, setTheme] = useState<Theme>("light");
+	const [theme, setTheme] = useState<Theme>(loadedTheme);
 
 	const onReceivePeerData = useCallback(
 		(incoming: boolean, _conn: any, data: any) => {

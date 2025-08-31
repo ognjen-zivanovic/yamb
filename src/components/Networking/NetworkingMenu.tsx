@@ -130,7 +130,7 @@ export const NetworkingMenu = ({
 				<div className="bg-control flex flex-col items-center rounded-lg p-4 shadow-lg sm:p-8">
 					{(isHost || willJoinHost) && (
 						<p className="text-my-gray mb-2 w-full text-base sm:text-lg">
-							<strong>Your ID:</strong> {peerId}
+							<strong>Tvoj ID:</strong> {peerId}
 						</p>
 					)}
 
@@ -140,17 +140,17 @@ export const NetworkingMenu = ({
 								onClick={() => setWillJoinHost(true)}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 							>
-								Join Game
+								Uđi u igru
 							</button>
 							<button
 								onClick={() => {
 									startHost();
-									setName("Host");
+									setName("Domaćin");
 								}}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 								//disabled={!name.trim()}
 							>
-								Become Host
+								Postani domaćin
 							</button>
 							<button
 								onClick={() => {
@@ -170,7 +170,7 @@ export const NetworkingMenu = ({
 								}}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 							>
-								Load game
+								Učitaj igru
 							</button>
 						</div>
 					)}
@@ -181,7 +181,7 @@ export const NetworkingMenu = ({
 								<div className="flex w-full flex-col gap-4 sm:gap-6">
 									<div className="flex flex-col gap-3 sm:flex-row">
 										<input
-											placeholder="Host ID"
+											placeholder="ID domaćina"
 											value={hostId}
 											onChange={(e) =>
 												setHostId(e.target.value.toUpperCase())
@@ -193,14 +193,14 @@ export const NetworkingMenu = ({
 											disabled={!name.trim() || !hostId.trim()}
 											className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 										>
-											Join
+											Uđi
 										</button>
 									</div>
 									{
 										<div className="flex flex-col gap-3">
 											<div className="flex flex-row gap-3">
 												<input
-													placeholder="Your name"
+													placeholder="Tvoje ime"
 													value={name}
 													// TODO move this to settings
 													onChange={(e) => {
@@ -269,6 +269,7 @@ const PreviousGameFromSave = ({
 	isDry?: boolean;
 }) => {
 	const [prevSavedGames, setPrevSavedGames] = useState<SavedGame[]>([]);
+	const [errorText, setErrorText] = useState("");
 
 	interface SavedGame {
 		id: string;
@@ -391,156 +392,157 @@ const PreviousGameFromSave = ({
 							startCnt++;
 						}
 					}
+					if (start == -1) {
+						setErrorText("🧙🏻‍♀️🔮🪄 Čarobni pikseli nisu pronađeni");
+						return;
+					}
 					const w = startCnt * 4;
 					start += w + 4;
-					if (start != -1) {
-						let rows = pixels[start + 0];
-						let cols = pixels[start + 1];
-						let time =
-							(pixels[start + 2] << 24) |
-							(pixels[start + w + 0] << 16) |
-							(pixels[start + w + 1] << 8) |
-							pixels[start + w + 2];
+					let rows = pixels[start + 0];
+					let cols = pixels[start + 1];
+					let time =
+						(pixels[start + 2] << 24) |
+						(pixels[start + w + 0] << 16) |
+						(pixels[start + w + 1] << 8) |
+						pixels[start + w + 2];
 
-						start += 2 * w;
+					start += 2 * w;
 
-						const RColor = pixels[start + 0];
-						const GColor = pixels[start + 1];
-						const BColor = pixels[start + 2];
-						const AColor = pixels[start + 3];
+					const RColor = pixels[start + 0];
+					const GColor = pixels[start + 1];
+					const BColor = pixels[start + 2];
+					const AColor = pixels[start + 3];
 
-						start += w;
+					start += w;
 
-						gameState.isMyMove = (pixels[start + 0] & (1 << 7)) != 0;
-						gameState.isRucna = (pixels[start + 0] & (1 << 6)) != 0;
-						Globals.isSolo = (pixels[start + 0] & (1 << 5)) != 0; // TODO: maybe fix this or something
-						gameState.roundIndex = pixels[start + 0] & 0b00011111;
+					gameState.isMyMove = (pixels[start + 0] & (1 << 7)) != 0;
+					gameState.isRucna = (pixels[start + 0] & (1 << 6)) != 0;
+					Globals.isSolo = (pixels[start + 0] & (1 << 5)) != 0; // TODO: maybe fix this or something
+					gameState.roundIndex = pixels[start + 0] & 0b00011111;
 
-						let najavaNum = (pixels[start + 1] & 0xf0) >> 4;
-						let dirigovanaNum = pixels[start + 1] & 0xf;
-						gameState.najava =
-							najavaNum == 15 ? undefined : RowNameFromNumber[najavaNum];
-						gameState.dirigovana =
-							dirigovanaNum == 15 ? undefined : RowNameFromNumber[dirigovanaNum];
+					let najavaNum = (pixels[start + 1] & 0xf0) >> 4;
+					let dirigovanaNum = pixels[start + 1] & 0xf;
+					gameState.najava = najavaNum == 15 ? undefined : RowNameFromNumber[najavaNum];
+					gameState.dirigovana =
+						dirigovanaNum == 15 ? undefined : RowNameFromNumber[dirigovanaNum];
 
-						let numPeers = pixels[start + 2];
+					let numPeers = pixels[start + 2];
 
-						start += w;
-						const chosenDice: number[] = [];
-						const rolledDice: number[] = [];
-						for (let i = 0; i < 3; i++) {
-							const subpixel = pixels[start + i];
-							const a = (subpixel >> 4) & 0b1111;
-							const b = subpixel & 0b1111;
-							function addDice(isChosen: boolean, value: number) {
-								if (isChosen) {
-									chosenDice.push(value);
-								} else {
-									rolledDice.push(value);
-								}
+					start += w;
+					const chosenDice: number[] = [];
+					const rolledDice: number[] = [];
+					for (let i = 0; i < 3; i++) {
+						const subpixel = pixels[start + i];
+						const a = (subpixel >> 4) & 0b1111;
+						const b = subpixel & 0b1111;
+						function addDice(isChosen: boolean, value: number) {
+							if (isChosen) {
+								chosenDice.push(value);
+							} else {
+								rolledDice.push(value);
 							}
-
-							// if zero dont add, TODO
-							if (a != 0) addDice((a & 0b1000) != 0, a & 0b111);
-							if (b != 0) addDice((b & 0b1000) != 0, b & 0b111);
 						}
 
+						// if zero dont add, TODO
+						if (a != 0) addDice((a & 0b1000) != 0, a & 0b111);
+						if (b != 0) addDice((b & 0b1000) != 0, b & 0b111);
+					}
+
+					start += w;
+					let gameId =
+						stringFromHex(pixels[start + 0]) +
+						stringFromHex(pixels[start + 1]) +
+						stringFromHex(pixels[start + 2]);
+
+					start += w;
+					let peerId =
+						stringFromHex(pixels[start + 0]) +
+						stringFromHex(pixels[start + 1]) +
+						stringFromHex(pixels[start + 2]);
+
+					for (let i = 0; i < numPeers; i++) {
 						start += w;
-						let gameId =
+						let id =
 							stringFromHex(pixels[start + 0]) +
 							stringFromHex(pixels[start + 1]) +
 							stringFromHex(pixels[start + 2]);
+						peerDataLoaded.push({ id, name: "", index: i });
+					}
 
-						start += w;
-						let peerId =
-							stringFromHex(pixels[start + 0]) +
-							stringFromHex(pixels[start + 1]) +
-							stringFromHex(pixels[start + 2]);
+					start += w;
+					for (let r = 0; r < rows; r++) {
+						for (let c = 0; c < cols; c++) {
+							const cellIndex = r * cols + c;
+							const pixelOffset = cellIndex * w + start;
 
-						for (let i = 0; i < numPeers; i++) {
-							start += w;
-							let id =
-								stringFromHex(pixels[start + 0]) +
-								stringFromHex(pixels[start + 1]) +
-								stringFromHex(pixels[start + 2]);
-							peerDataLoaded.push({ id, name: "", index: i });
-						}
+							let R = pixels[pixelOffset + 0];
+							let G = pixels[pixelOffset + 1];
+							let B = pixels[pixelOffset + 2];
+							let A = pixels[pixelOffset + 3];
 
-						start += w;
-						for (let r = 0; r < rows; r++) {
-							for (let c = 0; c < cols; c++) {
-								const cellIndex = r * cols + c;
-								const pixelOffset = cellIndex * w + start;
+							R ^= RColor; // value (or 0 if undefined)
+							G ^= GColor; // hasValue (0 if has value, >=1 if undefined)
+							B ^= BColor; // available (0 if false, 1 if true, >=2 if undefined)
+							A ^= AColor; // should be always 255
 
-								let R = pixels[pixelOffset + 0];
-								let G = pixels[pixelOffset + 1];
-								let B = pixels[pixelOffset + 2];
-								let A = pixels[pixelOffset + 3];
+							let available: boolean | undefined =
+								B == 1 ? true : B == 0 ? false : undefined;
+							let hasValue: boolean | undefined = G == 0;
 
-								R ^= RColor; // value (or 0 if undefined)
-								G ^= GColor; // hasValue (0 if has value, >=1 if undefined)
-								B ^= BColor; // available (0 if false, 1 if true, >=2 if undefined)
-								A ^= AColor; // should be always 255
+							let val: number | undefined = R;
+							if (hasValue == false) val = undefined;
 
-								let available: boolean | undefined =
-									B == 1 ? true : B == 0 ? false : undefined;
-								let hasValue: boolean | undefined = G == 0;
-
-								let val: number | undefined = R;
-								if (hasValue == false) val = undefined;
-
-								if (val != undefined || available != undefined) {
-									updateTabela(r, c, {
-										value: val,
-										isAvailable: available,
-									});
-								}
+							if (val != undefined || available != undefined) {
+								updateTabela(r, c, {
+									value: val,
+									isAvailable: available,
+								});
 							}
 						}
-						if (!isDry) {
-							// console.log(
-							// 	"Decoded: ",
-							// 	rows,
-							// 	cols,
-							// 	totalCells,
-							// 	gameState,
-							// 	peerDataLoaded,
-							// 	peerId,
-							// 	time
-							// );
+					}
+					if (!isDry) {
+						// console.log(
+						// 	"Decoded: ",
+						// 	rows,
+						// 	cols,
+						// 	totalCells,
+						// 	gameState,
+						// 	peerDataLoaded,
+						// 	peerId,
+						// 	time
+						// );
 
-							if (chosenDice.length != 0) gameState.chosenDice = chosenDice;
-							if (rolledDice.length != 0) gameState.rolledDice = rolledDice;
-							if (chosenDice.length != 0) gameState.numChosenDice = chosenDice.length;
+						if (chosenDice.length != 0) gameState.chosenDice = chosenDice;
+						if (rolledDice.length != 0) gameState.rolledDice = rolledDice;
+						if (chosenDice.length != 0) gameState.numChosenDice = chosenDice.length;
 
-							setTabela((prev) => {
-								// is there a smarter way to do this?
-								// maybe a ref or something but that seems overkill
-								const tabela = prev;
-								const data: any = {};
-								data.peerData = peerDataLoaded;
-								data.peerData = data.peerData.map((p: any) =>
-									p.id === peerId ? { ...p, tabela } : p
-								);
-								data.tabela = tabela;
-								data.peerId = peerId;
-								data.gameState = gameState;
-								data.color =
-									"#" +
-									stringFromHex(RColor) +
-									stringFromHex(GColor) +
-									stringFromHex(BColor);
-								data.date = time;
-								data.globals = Globals;
+						setTabela((prev) => {
+							// is there a smarter way to do this?
+							// maybe a ref or something but that seems overkill
+							const tabela = prev;
+							const data: any = {};
+							data.peerData = peerDataLoaded;
+							data.peerData = data.peerData.map((p: any) =>
+								p.id === peerId ? { ...p, tabela } : p
+							);
+							data.tabela = tabela;
+							data.peerId = peerId;
+							data.gameState = gameState;
+							data.color =
+								"#" +
+								stringFromHex(RColor) +
+								stringFromHex(GColor) +
+								stringFromHex(BColor);
+							data.date = time;
+							data.globals = Globals;
 
-								localStorage.setItem(gameId + "-data", JSON.stringify(data));
+							localStorage.setItem(gameId + "-data", JSON.stringify(data));
 
-								localStorage.setItem(gameId + "-peerId", peerId);
+							localStorage.setItem(gameId + "-peerId", peerId);
 
-								window.location.href = "/yamb/?game=" + gameId;
-								return prev;
-							});
-						}
+							window.location.href = "/yamb/?game=" + gameId;
+							return prev;
+						});
 					}
 					setIsSaveLoaded(true);
 				};
@@ -570,6 +572,18 @@ const PreviousGameFromSave = ({
 					<SmartphoneSvg />
 				</button>
 			</div>
+			{errorText && (
+				<>
+					<div
+						className="bg-shade-1 m-2 rounded-md border-4 p-2 text-xl"
+						onClick={() => {
+							setErrorText("");
+						}}
+					>
+						{errorText}
+					</div>
+				</>
+			)}
 			<div className="justify-baseline flex flex-col items-baseline gap-2">
 				{prevSavedGames.map((game) => (
 					<div className="flex flex-row gap-2 overflow-auto" key={game.id + "-item"}>
