@@ -16,7 +16,7 @@ export function encodeTabelaToCanvas(
 	const cols = tabela.reduce((max, r) => Math.max(max, r.length), 0);
 	const totalCells = rows * cols;
 
-	let headerSize = 9 + peerData.length;
+	let headerSize = 10 + peerData.length;
 	// 4 pixels
 	// first pixel stores the first character of the name in R, second in G, third in B and 255 in A
 	// second pixel stores the fourth character of the name in R, fifth in G, sixth in B and 255 in A
@@ -83,38 +83,54 @@ export function encodeTabelaToCanvas(
 	data[5 * 4 + 2] = peerData.length & 0xff;
 	data[5 * 4 + 3] = 255;
 
+	let excludedR = 0;
+	let excludedG = 0;
+	let excludedB = 0;
+	let excludedA = 255;
+	for (let i = 0; i < gameState.isExcluded.length; i++) {
+		if (i <= 7) {
+			excludedR |= (gameState.isExcluded[i] ? 1 : 0) << i;
+		} else {
+			excludedG |= (gameState.isExcluded[i] ? 1 : 0) << (i - 8);
+		}
+	}
+	data[6 * 4 + 0] = excludedR;
+	data[6 * 4 + 1] = excludedG;
+	data[6 * 4 + 2] = excludedB;
+	data[6 * 4 + 3] = excludedA;
+
 	const numChosen = gameState.chosenDice?.length ?? 0;
 	const dice =
 		gameState.chosenDice != undefined && gameState.rolledDice != undefined
 			? [...gameState.chosenDice, ...gameState.rolledDice]
 			: [0, 0, 0, 0, 0, 0];
-	data[6 * 4 + 0] =
+	data[7 * 4 + 0] =
 		((((0 < numChosen ? 1 : 0) << 3) | (dice[0] & 0b111)) << 4) |
 		(((1 < numChosen ? 1 : 0) << 3) | (dice[1] & 0b111));
-	data[6 * 4 + 1] =
+	data[7 * 4 + 1] =
 		((((2 < numChosen ? 1 : 0) << 3) | (dice[2] & 0b111)) << 4) |
 		(((3 < numChosen ? 1 : 0) << 3) | (dice[3] & 0b111));
-	data[6 * 4 + 2] =
+	data[7 * 4 + 2] =
 		((((4 < numChosen ? 1 : 0) << 3) | (dice[4] & 0b111)) << 4) |
 		(((5 < numChosen ? 1 : 0) << 3) | (dice[5] & 0b111));
-	data[6 * 4 + 3] = 255;
-
-	data[7 * 4 + 0] = parseInt(gameId.slice(0, 2), 16) & 0xff;
-	data[7 * 4 + 1] = parseInt(gameId.slice(2, 4), 16) & 0xff;
-	data[7 * 4 + 2] = parseInt(gameId.slice(4, 6), 16) & 0xff;
 	data[7 * 4 + 3] = 255;
 
-	data[8 * 4 + 0] = parseInt(peerId.slice(0, 2), 16) & 0xff;
-	data[8 * 4 + 1] = parseInt(peerId.slice(2, 4), 16) & 0xff;
-	data[8 * 4 + 2] = parseInt(peerId.slice(4, 6), 16) & 0xff;
+	data[8 * 4 + 0] = parseInt(gameId.slice(0, 2), 16) & 0xff;
+	data[8 * 4 + 1] = parseInt(gameId.slice(2, 4), 16) & 0xff;
+	data[8 * 4 + 2] = parseInt(gameId.slice(4, 6), 16) & 0xff;
 	data[8 * 4 + 3] = 255;
+
+	data[9 * 4 + 0] = parseInt(peerId.slice(0, 2), 16) & 0xff;
+	data[9 * 4 + 1] = parseInt(peerId.slice(2, 4), 16) & 0xff;
+	data[9 * 4 + 2] = parseInt(peerId.slice(4, 6), 16) & 0xff;
+	data[9 * 4 + 3] = 255;
 
 	for (let i = 0; i < peerData.length; i++) {
 		const peer = peerData[i];
-		data[9 * 4 + i * 4 + 0] = parseInt(peer.id.slice(0, 2), 16) & 0xff;
-		data[9 * 4 + i * 4 + 1] = parseInt(peer.id.slice(2, 4), 16) & 0xff;
-		data[9 * 4 + i * 4 + 2] = parseInt(peer.id.slice(4, 6), 16) & 0xff;
-		data[9 * 4 + i * 4 + 3] = 255;
+		data[10 * 4 + i * 4 + 0] = parseInt(peer.id.slice(0, 2), 16) & 0xff;
+		data[10 * 4 + i * 4 + 1] = parseInt(peer.id.slice(2, 4), 16) & 0xff;
+		data[10 * 4 + i * 4 + 2] = parseInt(peer.id.slice(4, 6), 16) & 0xff;
+		data[10 * 4 + i * 4 + 3] = 255;
 	}
 
 	// Encode cells row-major into pixels

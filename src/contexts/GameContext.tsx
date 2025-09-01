@@ -11,6 +11,8 @@ export interface GameState {
 	isRucna?: boolean;
 	isMyMove: boolean;
 
+	isExcluded: boolean[];
+
 	chosenDice?: number[];
 	rolledDice?: number[];
 	numChosenDice?: number;

@@ -1,19 +1,14 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import {
-	type GameState,
-	PeerDataContext,
-	StateContext,
-	TabelaContext,
-} from "../../contexts/GameContext";
+import { PeerDataContext, StateContext, TabelaContext } from "../../contexts/GameContext";
 import { useNetworking } from "../../contexts/NetworkingContext";
+import Globals from "../../globals";
 import { CogSvg, InterdictionSvg, LargePaintBrushSvg } from "../../Svgs";
 import { encodeTabelaToCanvas } from "../../utils/encodeTabelaToCanvas";
 import { generateTailwindShades } from "../../utils/generateTailwindShades";
 import { YambBoard } from "../Board/Board";
-import type { RowName } from "../Board/BoardHelpers";
+import { ColumnNames, type RowName } from "../Board/BoardHelpers";
 import { DiceControls } from "../Dice/DiceControls";
 import { GptSettings, type GptSettingsHandle } from "../Dice/GptSettings";
-import Globals from "../../globals";
 
 const urlParams = new URLSearchParams(window.location.search);
 const gameIdFromUrl = urlParams.get("game");
@@ -26,16 +21,7 @@ if (dataObj?.globals) {
 }
 
 export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string }) => {
-	const [gameState, setGameState] = useState<GameState>(
-		dataObj?.gameState ?? {
-			roundIndex: 0,
-			value: [],
-			isMyMove: false,
-			chosenDice: [],
-			rolledDice: [],
-			numChosenDice: 0,
-		}
-	);
+	const { gameState, setGameState } = useContext(StateContext);
 
 	const { peerData } = useContext(PeerDataContext);
 
@@ -57,6 +43,15 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 			if (hostId == peerId) setGameState((prev) => ({ ...prev, isMyMove: true }));
 		}
 	}, []);
+
+	useEffect(() => {
+		let isSoloExlusions = [];
+		isSoloExlusions[ColumnNames.Najava] = true;
+		isSoloExlusions[ColumnNames.Dirigovana] = true;
+		if (Globals.isSolo) {
+			setGameState((prev) => ({ ...prev, isExcluded: isSoloExlusions }));
+		}
+	}, [Globals.isSolo]);
 
 	useEffect(() => {
 		let data: any = {};
@@ -81,10 +76,14 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	const onReceiveNajava = (_incoming: boolean, _conn: any, data: any) => {
 		setGameState((prev) => ({ ...prev, dirigovana: data.data as RowName }));
 	};
+	const onReceiveExcludeColumn = (_incoming: boolean, _conn: any, data: any) => {
+		setGameState((prev) => ({ ...prev, isExcluded: data.data }));
+	};
 
 	useEffect(() => {
 		registerDataCallback("najava", onReceiveNajava);
 		registerDataCallback("next-player", onReceivePreviousPlayersMove);
+		registerDataCallback("exclude-columns", onReceiveExcludeColumn);
 	}, []);
 
 	//	function getRandomColor() {
@@ -151,85 +150,83 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	// };
 	return (
 		<div className="relative">
-			<StateContext.Provider value={{ gameState, setGameState }}>
-				<div className="absolute top-0 flex w-screen flex-col items-center justify-center pb-4 pt-4">
-					<div className="relative z-10 flex flex-row">
-						<canvas ref={canvasRef} className="absolute h-[1px] translate-x-[-50%]" />
-						{/* <button ref={buttonRef} className="h-16 w-16 bg-amber-900">
+			<div className="absolute top-0 flex w-screen flex-col items-center justify-center pb-4 pt-4">
+				<div className="relative z-10 flex flex-row">
+					<canvas ref={canvasRef} className="absolute h-[1px] translate-x-[-50%]" />
+					{/* <button ref={buttonRef} className="h-16 w-16 bg-amber-900">
         Shit
     </button> */}
-					</div>
-					<div
-						style={{ transform: `scale(${scale})`, transformOrigin: "top" }}
-						className="relative"
-					>
-						<YambBoard />
-						<div
-							className="bg-shade-1 absolute m-6 rounded-md border-4 p-2 text-3xl"
-							style={{ top: "525px" }}
-							onClick={(e) => {
-								(e.target as HTMLDivElement).hidden = true;
-							}}
-							hidden={true}
-							ref={setTextRef}
-						>
-							☝️🤖
-						</div>
-						<GptSettings ref={gptSettingsRef} />
-						<div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-							<div className="mb-2 flex flex-row items-center justify-around gap-4 sm:flex-col">
-								<button className="relative h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]">
-									<LargePaintBrushSvg />
-									<input
-										type="color"
-										defaultValue="#eb6434"
-										ref={colorPickerRef}
-										className="absolute left-0 top-0 h-16 w-16 opacity-0 sm:h-12 sm:w-12"
-									/>
-								</button>
-
-								{gameState.isMyMove && gameState.roundIndex > 0 && (
-									<>
-										<button
-											className={`h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px] ${
-												gameState.blackout ? "!bg-red-500 border-black" : ""
-											}`}
-											onClick={() =>
-												setGameState((prev) => ({
-													...prev,
-													blackout: !prev.blackout,
-												}))
-											}
-										>
-											<InterdictionSvg />
-										</button>
-									</>
-								)}
-								{gameState.roundIndex > 0 && (
-									<button
-										className="h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]"
-										onClick={() => {
-											if (!gptSettingsRef.current) return;
-											gptSettingsRef.current.setHidden(
-												!gptSettingsRef.current.isHidden
-											);
-										}}
-									>
-										<CogSvg />
-									</button>
-								)}
-							</div>
-							<DiceControls
-								textRef={textRef}
-								gameId={gameId}
-								gptSettingsRef={gptSettingsRef}
-							/>
-						</div>
-					</div>
-
-					{/* <button onClick={saveToLocalStorage}>Save to local storage</button> */}
 				</div>
-			</StateContext.Provider>
+				<div
+					style={{ transform: `scale(${scale})`, transformOrigin: "top" }}
+					className="relative"
+				>
+					<YambBoard textRef={textRef} />
+					<div
+						className="bg-shade-1 absolute m-6 rounded-md border-4 p-2 text-3xl"
+						style={{ top: "525px" }}
+						onClick={(e) => {
+							(e.target as HTMLDivElement).hidden = true;
+						}}
+						hidden={true}
+						ref={setTextRef}
+					>
+						☝️🤖
+					</div>
+					<GptSettings ref={gptSettingsRef} />
+					<div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
+						<div className="mb-2 flex flex-row items-center justify-around gap-4 sm:flex-col">
+							<button className="relative h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]">
+								<LargePaintBrushSvg />
+								<input
+									type="color"
+									defaultValue="#eb6434"
+									ref={colorPickerRef}
+									className="absolute left-0 top-0 h-16 w-16 opacity-0 sm:h-12 sm:w-12"
+								/>
+							</button>
+
+							{gameState.isMyMove && gameState.roundIndex > 0 && (
+								<>
+									<button
+										className={`h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px] ${
+											gameState.blackout ? "!bg-red-500 border-black" : ""
+										}`}
+										onClick={() =>
+											setGameState((prev) => ({
+												...prev,
+												blackout: !prev.blackout,
+											}))
+										}
+									>
+										<InterdictionSvg />
+									</button>
+								</>
+							)}
+							{gameState.roundIndex > 0 && (
+								<button
+									className="h-[65px] w-[65px] rounded-md border-2 border-main-600 bg-main-900 p-1 sm:h-[50px] sm:w-[50px]"
+									onClick={() => {
+										if (!gptSettingsRef.current) return;
+										gptSettingsRef.current.setHidden(
+											!gptSettingsRef.current.isHidden
+										);
+									}}
+								>
+									<CogSvg />
+								</button>
+							)}
+						</div>
+						<DiceControls
+							textRef={textRef}
+							gameId={gameId}
+							gptSettingsRef={gptSettingsRef}
+						/>
+					</div>
+				</div>
+
+				{/* <button onClick={saveToLocalStorage}>Save to local storage</button> */}
+			</div>
 		</div>
 	);
 };

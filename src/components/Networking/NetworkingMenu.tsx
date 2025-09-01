@@ -373,6 +373,7 @@ const PreviousGameFromSave = ({
 						roundIndex: 0,
 						isMyMove: false,
 						value: [],
+						isExcluded: [],
 					};
 
 					let peerDataLoaded: PeerData[] = [];
@@ -429,6 +430,20 @@ const PreviousGameFromSave = ({
 					let numPeers = pixels[start + 2];
 
 					start += w;
+					const excludedR = pixels[start + 0];
+					const excludedG = pixels[start + 1];
+					//const excludedB = pixels[start + 2];
+					//const excludedA = pixels[start + 3];
+					gameState.isExcluded = [];
+					for (let i = 0; i < 8; i++) {
+						gameState.isExcluded[i] = (excludedR & (1 << i)) != 0;
+					}
+					for (let i = 0; i < 8; i++) {
+						gameState.isExcluded[i + 8] = (excludedG & (1 << i)) != 0;
+					}
+					console.log(gameState.isExcluded);
+
+					start += w;
 					const chosenDice: number[] = [];
 					const rolledDice: number[] = [];
 					for (let i = 0; i < 3; i++) {
@@ -443,7 +458,6 @@ const PreviousGameFromSave = ({
 							}
 						}
 
-						// if zero dont add, TODO
 						if (a != 0) addDice((a & 0b1000) != 0, a & 0b111);
 						if (b != 0) addDice((b & 0b1000) != 0, b & 0b111);
 					}
@@ -512,9 +526,9 @@ const PreviousGameFromSave = ({
 						// 	time
 						// );
 
-						if (chosenDice.length != 0) gameState.chosenDice = chosenDice;
-						if (rolledDice.length != 0) gameState.rolledDice = rolledDice;
-						if (chosenDice.length != 0) gameState.numChosenDice = chosenDice.length;
+						gameState.chosenDice = chosenDice;
+						gameState.rolledDice = rolledDice;
+						gameState.numChosenDice = chosenDice.length;
 
 						setTabela((prev) => {
 							// is there a smarter way to do this?

@@ -17,11 +17,7 @@ const ReadonlyHeaderRow = () => {
 			{Array.from({ length: 10 }).map((_, index) => (
 				<div
 					key={index}
-					className={`border-main-500 border-1 h-full w-col-8 flex items-center justify-center text-foreground ${
-						index == ColumnNames.Obavezna || index == ColumnNames.Maksimalna
-							? "brightness-75 bg-background"
-							: ""
-					}`}
+					className={`border-1 w-col-8 text-foreground flex h-full items-center justify-center border-main-500`}
 				>
 					{columnHeaders[index % columnHeaders.length]}
 				</div>
@@ -59,11 +55,7 @@ const ReadonlyRow = ({ rowIndex, tabela }: { rowIndex: RowName; tabela: Cell[][]
 								? "bg-shade-1 border-t-2 border-b-2"
 								: ""
 						} 
-						} ${tabela[rowIndex][colIndex]?.value == 0 ? "!bg-my-black !border-0 text-transparent" : ""} ${
-							colIndex == ColumnNames.Obavezna || colIndex == ColumnNames.Maksimalna
-								? "brightness-75 bg-background"
-								: ""
-						}`}
+						} ${tabela[rowIndex][colIndex]?.value == 0 ? "!bg-my-black !border-0 text-transparent" : ""} `}
 					>
 						{tabela[rowIndex][colIndex]?.value != undefined
 							? tabela[rowIndex][colIndex]?.value

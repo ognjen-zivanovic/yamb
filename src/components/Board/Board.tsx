@@ -3,11 +3,11 @@ import { BoardHeaderRow } from "./BoardHeaderRow";
 import { ColumnNames, type Cell, type RowName } from "./BoardHelpers";
 import { BoardRow } from "./BoardRow";
 
-export const YambBoard = () => {
+export const YambBoard = ({ textRef }: { textRef: HTMLDivElement | null }) => {
 	return (
 		<>
 			<div className="flex aspect-[106/118] min-h-0 w-[600px] flex-col overflow-clip rounded-md border-4 border-solid border-main-500">
-				<BoardHeaderRow />
+				<BoardHeaderRow textRef={textRef} />
 				{Array.from({ length: 16 }).map((_, rowIndex) => (
 					<BoardRow key={rowIndex} rowIndex={rowIndex as RowName} />
 				))}
@@ -21,6 +21,8 @@ export function isCellActive(
 	colIndex: number,
 	gameState: GameState
 ) {
+	if (gameState.isExcluded[colIndex]) return false;
+
 	let isActive = tabela[rowIndex][colIndex]?.isAvailable && gameState.value[rowIndex] > 0;
 	if (colIndex == ColumnNames.Najava && gameState.najava != rowIndex) isActive = false;
 	if (colIndex == ColumnNames.Dirigovana && gameState.dirigovana != rowIndex) isActive = false;

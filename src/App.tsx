@@ -7,7 +7,12 @@ import {
 } from "./components/Board/BoardHelpers";
 import { NetworkingMenu } from "./components/Networking/NetworkingMenu";
 import { YambGame } from "./components/YambGame/YambGame";
-import { PeerDataContext, TabelaContext } from "./contexts/GameContext";
+import {
+	PeerDataContext,
+	StateContext,
+	TabelaContext,
+	type GameState,
+} from "./contexts/GameContext";
 import { useNetworking } from "./contexts/NetworkingContext";
 import { HouseSvg, MoonSvg, SunSvg } from "./Svgs";
 import { generateTailwindShades } from "./utils/generateTailwindShades";
@@ -43,6 +48,18 @@ const App = () => {
 	const { connectToAllPeers, registerCallback, registerDataCallback } = useNetworking();
 
 	const [theme, setTheme] = useState<Theme>(loadedTheme);
+
+	const [gameState, setGameState] = useState<GameState>(
+		dataObj?.gameState ?? {
+			roundIndex: 0,
+			value: [],
+			isMyMove: false,
+			chosenDice: [],
+			rolledDice: [],
+			numChosenDice: 0,
+			isExcluded: [],
+		}
+	);
 
 	const onReceivePeerData = useCallback(
 		(incoming: boolean, _conn: any, data: any) => {
@@ -142,6 +159,7 @@ const App = () => {
 
 					if (cnt == 6) {
 						copy[RowNames.Suma1][colIndex] = { value: sum, isAvailable: false };
+						calculateSumOfRow(RowNames.Suma1);
 					}
 				}
 			};
@@ -154,6 +172,7 @@ const App = () => {
 					if (maxi != undefined && mini != undefined && jedinice != undefined) {
 						let sum = Math.max(maxi - mini, 0) * jedinice;
 						copy[RowNames.Suma2][colIndex] = { value: sum, isAvailable: false };
+						calculateSumOfRow(RowNames.Suma2);
 					}
 				}
 			};
@@ -167,13 +186,17 @@ const App = () => {
 						sum += copy[rowIndex][colIndex]?.value ?? 0;
 					}
 					copy[RowNames.Suma3][colIndex] = { value: sum, isAvailable: false };
+					calculateSumOfRow(RowNames.Suma3);
 				}
 			};
 			const calculateSumOfRow = (rowName: (typeof RowNames)[keyof typeof RowNames]) => {
 				if (copy[rowName][ColumnNames.Yamb]?.value == undefined) {
 					let sum = 0;
 					for (let colIndex = 0; colIndex < 10; colIndex++) {
-						if (copy[rowName][colIndex]?.value == undefined) {
+						if (
+							!gameState.isExcluded[colIndex] &&
+							copy[rowName][colIndex]?.value == undefined
+						) {
 							return;
 						}
 						sum += copy[rowName][colIndex]?.value ?? 0;
@@ -185,8 +208,6 @@ const App = () => {
 			if (row == RowNames.Maksimum || row == RowNames.Minimum || row == RowNames.Jedinice)
 				calculateSumOfSecondSum(col);
 			if (row >= RowNames.Kenta && row <= RowNames.Yamb) calculateSumOfLastSum(col);
-			if (row == RowNames.Suma1 || row == RowNames.Suma2 || row == RowNames.Suma3)
-				calculateSumOfRow(row);
 
 			return copy;
 		});
@@ -302,7 +323,9 @@ const App = () => {
 							setWillJoinHost={setWillJoinHost}
 						/>
 					) : (
-						<YambGame gameId={gameId} hostId={hostId} />
+						<StateContext.Provider value={{ gameState, setGameState }}>
+							<YambGame gameId={gameId} hostId={hostId} />
+						</StateContext.Provider>
 					)}
 				</PeerDataContext.Provider>
 			</TabelaContext.Provider>

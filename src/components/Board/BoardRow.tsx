@@ -56,11 +56,7 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 							(isActive && gameState.value[rowIndex] == -1)
 								? "!bg-my-black !border-0 text-transparent"
 								: ""
-						} ${
-							colIndex == ColumnNames.Obavezna || colIndex == ColumnNames.Maksimalna
-								? "brightness-75 bg-background"
-								: ""
-						}`}
+						} ${gameState.isExcluded[colIndex] ? "brightness-75 bg-background" : ""}`}
 						onClick={() => {
 							chooseCell({
 								rowIndex,
@@ -74,6 +70,33 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 								sendMessageToNextPlayer,
 							});
 						}}
+						//onMouseEnter={(e) => {
+						//	// if rihgt mouse button is down
+						//	if (
+						//		rowIndex == RowNames.Suma1 ||
+						//		rowIndex == RowNames.Suma2 ||
+						//		rowIndex == RowNames.Suma3
+						//	) {
+						//		return;
+						//	}
+						//	let copyGameState = { ...gameState };
+						//	for (let i = 0; i < 16; i++) {
+						//		copyGameState.value[i] = Math.ceil(10 * Math.random());
+						//	}
+						//	console.log(copyGameState);
+						//	let isActive = true;
+						//	chooseCell({
+						//		rowIndex,
+						//		colIndex,
+						//		gameState: copyGameState,
+						//		isActive,
+						//		tabela,
+						//		updateTabela,
+						//		setGameState,
+						//		broadcastMessage,
+						//		sendMessageToNextPlayer,
+						//	});
+						//}}
 					>
 						{tabela[rowIndex][colIndex]?.value != undefined
 							? tabela[rowIndex][colIndex]?.value

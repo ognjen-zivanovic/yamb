@@ -46,9 +46,27 @@ export const chooseCell = ({
 		chosenDice: [],
 		rolledDice: [],
 		numChosenDice: 0,
+		isExcluded: gameState.isExcluded,
 	});
 	sendMessageToNextPlayer("next-player", {});
 	broadcastMessage("move", { rowIndex, colIndex, value: newValue });
+
+	if (colIndex == ColumnNames.Obavezna) {
+		let maxi = -1;
+		for (let i = 0; i < 9; i++) {
+			let val = tabela[rowIndex][i]?.value;
+			if (!val) {
+				continue;
+			}
+			if (val > maxi) {
+				maxi = val;
+			}
+		}
+		updateTabela(rowIndex, ColumnNames.Maksimalna, {
+			value: maxi,
+			isAvailable: false,
+		});
+	}
 };
 
 export const SetNewAvailable = (
@@ -60,7 +78,8 @@ export const SetNewAvailable = (
 	if (
 		colIndex == ColumnNames.OdGore ||
 		colIndex == ColumnNames.OdGoreIDole ||
-		colIndex == ColumnNames.OdSredine
+		colIndex == ColumnNames.OdSredine ||
+		colIndex == ColumnNames.Obavezna
 	) {
 		SetNewInDirection(tabela, updateTabela, rowIndex, colIndex, 1);
 	}
@@ -71,6 +90,29 @@ export const SetNewAvailable = (
 		colIndex == ColumnNames.OdSredine
 	) {
 		SetNewInDirection(tabela, updateTabela, rowIndex, colIndex, -1);
+	}
+
+	let allDone = true;
+	for (let rowIndex = 0; rowIndex < 16; rowIndex++) {
+		for (let colIndex = 0; colIndex < 8; colIndex++) {
+			if (tabela[rowIndex][colIndex]?.value == undefined) {
+				allDone = false;
+				break;
+			}
+		}
+		if (!allDone) {
+			break;
+		}
+	}
+	if (
+		allDone &&
+		tabela[RowNames.Jedinice][ColumnNames.Obavezna]?.value == undefined &&
+		colIndex != ColumnNames.Obavezna
+	) {
+		updateTabela(RowNames.Jedinice, ColumnNames.Obavezna, {
+			value: undefined,
+			isAvailable: true,
+		});
 	}
 };
 
