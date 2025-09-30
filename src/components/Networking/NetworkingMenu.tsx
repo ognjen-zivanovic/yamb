@@ -691,7 +691,6 @@ const PeerDataPanel = ({
 	};
 	return (
 		<div className="bg-inner-bg mb-4 mt-4 w-full rounded-lg border-2 border-gray-300 p-4 sm:mt-6 sm:p-6">
-			<h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">Peer Data</h3>
 			<ul className="space-y-3">
 				{peerData.map((p, index) => (
 					<li

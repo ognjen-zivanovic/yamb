@@ -231,7 +231,7 @@ const App = () => {
 
 	// EASTER EGG ----------------------------------
 	const tapsRef = useRef<number[]>([]);
-	const TAP_WINDOW = 600; // ms
+	const TAP_WINDOW = 1000; // ms
 
 	const [isRunning, setIsRunning] = useState(false);
 	const intervalRef = useRef<NodeJS.Timeout | null>(null);
