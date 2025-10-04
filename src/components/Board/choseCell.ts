@@ -30,6 +30,9 @@ export const chooseCell = ({
 	if (!gameState.blackout && !isActive) {
 		return;
 	}
+	if (gameState.isExcluded[colIndex] == true) {
+		return;
+	}
 	let newValue = gameState.value[rowIndex] == -1 ? 0 : gameState.value[rowIndex];
 	if (gameState.blackout && !isActive) newValue = 0;
 	updateTabela(rowIndex, colIndex, {

@@ -21,18 +21,23 @@ export const BoardRow = ({ rowIndex }: { rowIndex: RowName }) => {
 				rowIndex === RowNames.Suma3
 					? "border-t-2 border-b-2"
 					: ""
-			}`}
+			} ${gameState.najava == rowIndex ? "bg-shade-1" : ""}
+			`}
 				onClick={() => {
 					if (
 						gameState.roundIndex == 1 &&
-						gameState.najava == undefined &&
 						gameState.dirigovana == undefined &&
 						rowIndex != RowNames.Suma1 &&
 						rowIndex != RowNames.Suma2 &&
 						rowIndex != RowNames.Suma3
 					) {
-						setGameState((prev) => ({ ...prev, najava: rowIndex }));
-						sendMessageToNextPlayer("najava", rowIndex);
+						if (gameState.najava != rowIndex) {
+							setGameState((prev) => ({ ...prev, najava: rowIndex }));
+							sendMessageToNextPlayer("najava", rowIndex);
+						} else {
+							setGameState((prev) => ({ ...prev, najava: undefined }));
+							sendMessageToNextPlayer("najava", undefined);
+						}
 					}
 				}}
 			>
