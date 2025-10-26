@@ -44,8 +44,14 @@ export const NetworkingMenu = ({
 	willJoinHost: boolean;
 	setWillJoinHost: Dispatch<SetStateAction<boolean>>;
 }) => {
-	const { peerId, connectToPeer, broadcastMessage, registerDataCallback, setNextPeerId } =
-		useNetworking();
+	const {
+		peerId,
+		connectToPeer,
+		broadcastMessage,
+		registerDataCallback,
+		setNextPeerId,
+		isConnectionOpen,
+	} = useNetworking();
 
 	// const [log, setLog] = useState<string[]>([]);
 	// const [input, setInput] = useState("");
@@ -139,6 +145,7 @@ export const NetworkingMenu = ({
 							<button
 								onClick={() => setWillJoinHost(true)}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
+								disabled={!isConnectionOpen}
 							>
 								Uđi u igru
 							</button>
@@ -148,7 +155,7 @@ export const NetworkingMenu = ({
 									setName("Domaćin");
 								}}
 								className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
-								//disabled={!name.trim()}
+								disabled={!isConnectionOpen}
 							>
 								Postani domaćin
 							</button>
@@ -190,7 +197,9 @@ export const NetworkingMenu = ({
 										/>
 										<button
 											onClick={joinHost}
-											disabled={!name.trim() || !hostId.trim()}
+											disabled={
+												!isConnectionOpen || !name.trim() || !hostId.trim()
+											}
 											className="rounded-md bg-main-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300 sm:px-6"
 										>
 											Uđi

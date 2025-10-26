@@ -24,6 +24,7 @@ export interface NetworkingContextValue {
 	registerDataCallback: (type: string, callback: (...args: any[]) => void) => void;
 
 	setNextPeerId: Dispatch<SetStateAction<string>>;
+	isConnectionOpen: boolean;
 }
 const NetworkingContext = createContext<NetworkingContextValue | undefined>(undefined);
 const urlParams = new URLSearchParams(window.location.search);
@@ -43,11 +44,25 @@ const nanoid = customAlphabet(alphabet, 6);
 const defaultPeerId = savedPeerId ?? nanoid();
 
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
-	const [peer] = useState<Peer | null>(defaultPeerId ? new Peer(defaultPeerId) : new Peer());
+	//const [peer] = useState<Peer | null>(defaultPeerId ? new Peer(defaultPeerId) : new Peer());
+	const [peer] = useState<Peer | null>(
+		defaultPeerId
+			? new Peer(defaultPeerId, {
+					host: "peerjs-server-xl4e.onrender.com",
+					path: "/",
+					secure: true,
+			  })
+			: new Peer("", {
+					host: "peerjs-server-xl4e.onrender.com",
+					path: "/",
+					secure: true,
+			  })
+	);
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
 	const [peerId, setPeerId] = useState(defaultPeerId ?? "");
 
 	const [nextPeerId, setNextPeerId] = useState(savedNextPeerId ?? "");
+	const [isConnectionOpen, setIsConnectionOpen] = useState(false);
 
 	// function callbacks, map from string to a function
 	// Use a ref so event handlers always see the latest callbacks without stale closures
@@ -59,6 +74,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		peer.on("open", (id) => {
 			setPeerId(id);
 			console.log(`Your Peer ID: ${id}`);
+			setIsConnectionOpen(true);
 		});
 
 		peer.on("connection", (conn) => {
@@ -67,6 +83,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 		});
 
 		return () => {
+			setIsConnectionOpen(false);
 			peer.destroy();
 		};
 	}, []);
@@ -147,6 +164,7 @@ export const NetworkingProvider = ({ children }: { children: React.ReactNode }) 
 				registerCallback,
 				registerDataCallback,
 				setNextPeerId,
+				isConnectionOpen,
 			}}
 		>
 			{children}

@@ -39,8 +39,13 @@ export const YambGame = ({ gameId, hostId }: { gameId: string; hostId: string })
 	const [themeColor, setThemeColor] = useState(dataObj?.color ?? "#50a2ff");
 
 	useEffect(() => {
+		console.log(peerData);
 		if (peerData.length > 0) {
 			if (hostId == peerId) setGameState((prev) => ({ ...prev, isMyMove: true }));
+		} else {
+			if (Globals.isSolo) {
+				setGameState((prev) => ({ ...prev, isMyMove: true }));
+			}
 		}
 	}, []);
 
