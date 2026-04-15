@@ -43,21 +43,59 @@ const alphabet = "ABCDEF0123456789";
 const nanoid = customAlphabet(alphabet, 6);
 const defaultPeerId = savedPeerId ?? nanoid();
 
+// the username and credentials are here
+// they are public
+// this is a free tier so who cares
+const peerConfig = {
+  config: {
+    iceServers: [
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "801082102012b2c257c97ebd",
+        credential: "pvR4P27/4HnWlg55",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "801082102012b2c257c97ebd",
+        credential: "pvR4P27/4HnWlg55",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "801082102012b2c257c97ebd",
+        credential: "pvR4P27/4HnWlg55",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "801082102012b2c257c97ebd",
+        credential: "pvR4P27/4HnWlg55",
+      },
+    ],
+  },
+};
+
+
 export const NetworkingProvider = ({ children }: { children: React.ReactNode }) => {
-	//const [peer] = useState<Peer | null>(defaultPeerId ? new Peer(defaultPeerId) : new Peer());
 	const [peer] = useState<Peer | null>(
-		defaultPeerId
-			? new Peer(defaultPeerId, {
-					host: "peerjs-server-xl4e.onrender.com",
-					path: "/",
-					secure: true,
-			  })
-			: new Peer("", {
-					host: "peerjs-server-xl4e.onrender.com",
-					path: "/",
-					secure: true,
-			  })
+  		defaultPeerId
+    		? new Peer(defaultPeerId, peerConfig)
+    		: new Peer(peerConfig)
 	);
+	//const [peer] = useState<Peer | null>(
+		//defaultPeerId
+			//? new Peer(defaultPeerId, {
+					//host: "peerjs-server-xl4e.onrender.com",
+					//path: "/",
+					//secure: true,
+			  //})
+			//: new Peer("", {
+					//host: "peerjs-server-xl4e.onrender.com",
+					//path: "/",
+					//secure: true,
+			  //})
+	//);
 	const [connections, setConnections] = useState<Map<string, any>>(new Map());
 	const [peerId, setPeerId] = useState(defaultPeerId ?? "");
 
